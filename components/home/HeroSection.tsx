@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function HeroSection() {
   const handleScroll = (
     e: React.MouseEvent<HTMLAnchorElement>,
-    targetId: string,
+    targetId: string
   ) => {
     e.preventDefault();
     const element = document.getElementById(targetId);
@@ -50,14 +50,14 @@ export default function HeroSection() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <Link
               href="#rules"
-              onClick={(e) => handleScroll(e, "rules")}
+              onClick={e => handleScroll(e, "rules")}
               className="px-6 sm:px-8 py-2 sm:py-3 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-colors text-sm sm:text-base"
             >
               Xem Nội Quy
             </Link>
             <Link
               href="#join"
-              onClick={(e) => handleScroll(e, "join")}
+              onClick={e => handleScroll(e, "join")}
               className="px-6 sm:px-8 py-2 sm:py-3 rounded-lg border border-primary text-primary hover:bg-primary/10 font-semibold transition-colors text-sm sm:text-base"
             >
               Cách Tham Gia

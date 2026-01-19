@@ -9,7 +9,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from "@/components/ui/select";
 import { X } from "lucide-react";
 
@@ -30,7 +30,7 @@ type MembersFilterProps = {
 export function MembersFilter({
   filters,
   onFilterChange,
-  onReset,
+  onReset
 }: MembersFilterProps) {
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFilterChange({ ...filters, name: e.target.value });
@@ -52,7 +52,7 @@ export function MembersFilter({
     onFilterChange({ ...filters, region: value });
   };
 
-  const isFiltered = Object.values(filters).some((value) => value !== "");
+  const isFiltered = Object.values(filters).some(value => value !== "");
 
   return (
     <div className="space-y-4 p-6 bg-card rounded-lg border border-border">
@@ -62,7 +62,7 @@ export function MembersFilter({
         {/* Name Filter */}
         <div className="space-y-2">
           <label htmlFor="name" className="text-sm font-medium">
-            Name
+            In-Game Name
           </label>
           <Input
             id="name"

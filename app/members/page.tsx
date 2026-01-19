@@ -6,7 +6,7 @@ import {
   Card,
   CardContent,
   CardFooter,
-  CardHeader,
+  CardHeader
 } from "@/components/ui/card";
 import { useMemo, useState } from "react";
 
@@ -56,7 +56,7 @@ const members: Member[] = [
     weapon: "Quạt dù/Silkbind",
     role: "DPS",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "1938475620",
@@ -65,7 +65,7 @@ const members: Member[] = [
     weapon: "Quạt Dù Heal",
     role: "Healer",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "5601928374",
@@ -74,7 +74,7 @@ const members: Member[] = [
     weapon: "9K/9T",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "9182736450",
@@ -83,7 +83,7 @@ const members: Member[] = [
     weapon: "Vô danh/Bellstrike",
     role: "DPS",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "3748291056",
@@ -92,7 +92,7 @@ const members: Member[] = [
     weapon: "Mo blade/Stonesplits",
     role: "Tank",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "6501928374",
@@ -101,7 +101,7 @@ const members: Member[] = [
     weapon: "Quạt dù/Silkbind",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "2847561930",
@@ -110,7 +110,7 @@ const members: Member[] = [
     weapon: "Quạt/Dù",
     role: "Healer",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "9374610285",
@@ -119,7 +119,7 @@ const members: Member[] = [
     weapon: "9k",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "1029384756",
@@ -128,7 +128,7 @@ const members: Member[] = [
     weapon: "Mo blade/Stonesplits",
     role: "Healer",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "5647382910",
@@ -137,7 +137,7 @@ const members: Member[] = [
     weapon: "9k",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "9182736401",
@@ -146,7 +146,7 @@ const members: Member[] = [
     weapon: "9k",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "3746501928",
@@ -155,7 +155,7 @@ const members: Member[] = [
     weapon: "Thương/quạt",
     role: "Healer",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "8473629105",
@@ -164,7 +164,7 @@ const members: Member[] = [
     weapon: "Vô danh/Bellstrike",
     role: "DPS",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "5647382911",
@@ -173,7 +173,7 @@ const members: Member[] = [
     weapon: "Quạt dù Dame/Heal",
     role: "Healer",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "2938475610",
@@ -182,7 +182,7 @@ const members: Member[] = [
     weapon: "9k/9T",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "8475610293",
@@ -191,7 +191,7 @@ const members: Member[] = [
     weapon: "Quạt dù",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "3748291057",
@@ -200,7 +200,7 @@ const members: Member[] = [
     weapon: "Vô danh/Bellstrike",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "9182736402",
@@ -209,7 +209,7 @@ const members: Member[] = [
     weapon: "song đao/Bamboocut",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "5647382912",
@@ -218,7 +218,7 @@ const members: Member[] = [
     weapon: "Vô danh/Bellstrike",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "1029384757",
@@ -227,7 +227,7 @@ const members: Member[] = [
     weapon: "Quạt dù/Silkbind",
     role: "DPS",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "9182736403",
@@ -236,7 +236,7 @@ const members: Member[] = [
     weapon: "Đại Đao/ Stoneplits",
     role: "Tank",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "3746501929",
@@ -245,7 +245,7 @@ const members: Member[] = [
     weapon: "Quạt dù/Silkbind",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "8473629106",
@@ -254,7 +254,7 @@ const members: Member[] = [
     weapon: "Hành / Quạt",
     role: "Healer",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "2938475611",
@@ -263,7 +263,7 @@ const members: Member[] = [
     weapon: "9k/heaven quaker/vo danh kiem",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "5647382913",
@@ -272,7 +272,7 @@ const members: Member[] = [
     weapon: "Dù/Quạt Silkbind",
     role: "Healer",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "9182736404",
@@ -281,7 +281,7 @@ const members: Member[] = [
     weapon: "9k/kt",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "3748291058",
@@ -290,7 +290,7 @@ const members: Member[] = [
     weapon: "Đại Đao/ Stoneplits",
     role: "Tank",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "8475610294",
@@ -299,7 +299,7 @@ const members: Member[] = [
     weapon: "9k Kiếm với thương",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "1029384758",
@@ -308,7 +308,7 @@ const members: Member[] = [
     weapon: "Vô danh/Bellstrike",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "9182736405",
@@ -317,7 +317,7 @@ const members: Member[] = [
     weapon: "Đại Đao/ Stoneplits",
     role: "Tank",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "3746501930",
@@ -326,7 +326,7 @@ const members: Member[] = [
     weapon: "song đao/Bamboocut",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "8473629107",
@@ -335,7 +335,7 @@ const members: Member[] = [
     weapon: "Quạt dù/Silkbind",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "2938475612",
@@ -344,7 +344,7 @@ const members: Member[] = [
     weapon: "Nameless Kiếm / Dù",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "5647382914",
@@ -353,7 +353,7 @@ const members: Member[] = [
     weapon: "9k/9 thương",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "9182736406",
@@ -362,7 +362,7 @@ const members: Member[] = [
     weapon: "9K/Bellstrike",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "3748291059",
@@ -371,7 +371,7 @@ const members: Member[] = [
     weapon: "vô danh combo",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "8475610295",
@@ -380,7 +380,7 @@ const members: Member[] = [
     weapon: "Quạt dù",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "1029384759",
@@ -389,7 +389,7 @@ const members: Member[] = [
     weapon: "Quạt dù/Silkbind",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "9182736407",
@@ -398,7 +398,7 @@ const members: Member[] = [
     weapon: "9K/Bellstrike",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "3746501931",
@@ -407,7 +407,7 @@ const members: Member[] = [
     weapon: "Vô danh/Bellstrike",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "8473629108",
@@ -416,7 +416,7 @@ const members: Member[] = [
     weapon: "Deluge/Stone",
     role: "Healer",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "2938475613",
@@ -425,7 +425,7 @@ const members: Member[] = [
     weapon: "9K/Bellstrike",
     role: "DPS",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "5647382915",
@@ -434,7 +434,7 @@ const members: Member[] = [
     weapon: "Vô danh/Bellstrike",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "9182736408",
@@ -443,7 +443,7 @@ const members: Member[] = [
     weapon: "Vô danh/Bellstrike",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "3748291060",
@@ -452,7 +452,7 @@ const members: Member[] = [
     weapon: "Vô danh/Bellstrike",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "8475610296",
@@ -461,7 +461,7 @@ const members: Member[] = [
     weapon: "9K/Vô danh",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "1029384760",
@@ -470,7 +470,7 @@ const members: Member[] = [
     weapon: "Quạt dù/Silkbind",
     role: "Healer",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "9182736409",
@@ -479,7 +479,7 @@ const members: Member[] = [
     weapon: "9k",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "3746501932",
@@ -488,7 +488,7 @@ const members: Member[] = [
     weapon: "Quạt dù/Silkbind",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "8473629109",
@@ -497,7 +497,7 @@ const members: Member[] = [
     weapon: "Đại Đao/ Stoneplits",
     role: "Tank",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "2938475614",
@@ -506,7 +506,7 @@ const members: Member[] = [
     weapon: "Dù quạt",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "5647382916",
@@ -515,7 +515,7 @@ const members: Member[] = [
     weapon: "Quạt dù",
     role: "Healer",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "9182736410",
@@ -524,7 +524,7 @@ const members: Member[] = [
     weapon: "vô danh combo",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "3748291061",
@@ -533,7 +533,7 @@ const members: Member[] = [
     weapon: "Quạt/dù",
     role: "Healer",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "8475610297",
@@ -542,7 +542,7 @@ const members: Member[] = [
     weapon: "Quạt Dù/Silkbind",
     role: "Healer",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "1029384761",
@@ -551,7 +551,7 @@ const members: Member[] = [
     weapon: "Quạt dù",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "9182736411",
@@ -560,7 +560,7 @@ const members: Member[] = [
     weapon: "Vô danh/Bellstrike",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "3746501933",
@@ -569,7 +569,7 @@ const members: Member[] = [
     weapon: "Vô danh / Bellstrike",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "8473629110",
@@ -578,7 +578,7 @@ const members: Member[] = [
     weapon: "9K/Bellstrike",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "2938475615",
@@ -587,7 +587,7 @@ const members: Member[] = [
     weapon: "Quạt dù/Silkbind",
     role: "DPS",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "5647382917",
@@ -596,7 +596,7 @@ const members: Member[] = [
     weapon: "Dù Thương/Bellstrike",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "9182736412",
@@ -605,7 +605,7 @@ const members: Member[] = [
     weapon: "Đại Đao/ Thương Tank",
     role: "Tank",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "3748291062",
@@ -614,7 +614,7 @@ const members: Member[] = [
     weapon: "vo danh",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "8475610298",
@@ -623,7 +623,7 @@ const members: Member[] = [
     weapon: "Song đao/Bamboocut",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "1029384762",
@@ -632,7 +632,7 @@ const members: Member[] = [
     weapon: "Đại Đao/ Stoneplits",
     role: "Tank",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "9182736413",
@@ -641,7 +641,7 @@ const members: Member[] = [
     weapon: "Vô danh/Bellstrike",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "3746501934",
@@ -650,7 +650,7 @@ const members: Member[] = [
     weapon: "Song Đao",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "8473629111",
@@ -659,7 +659,7 @@ const members: Member[] = [
     weapon: "Quạt Dù/Silkbind",
     role: "Healer",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "2938475616",
@@ -668,7 +668,7 @@ const members: Member[] = [
     weapon: "9 kiếm / 9 thương",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "5647382918",
@@ -677,7 +677,7 @@ const members: Member[] = [
     weapon: "Quạt dù",
     role: "DPS",
     status: "Core",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "9182736414",
@@ -686,7 +686,7 @@ const members: Member[] = [
     weapon: "Cửu Kiếm/Cửu Thương",
     role: "DPS",
     status: "Flex",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "3748291063",
@@ -695,7 +695,7 @@ const members: Member[] = [
     weapon: "Cửu Kiếm/Cửu Thương",
     role: "DPS",
     status: "Flex",
-    region: "NA",
+    region: "NA"
   },
   {
     id: "8475610299",
@@ -704,7 +704,7 @@ const members: Member[] = [
     weapon: "Đại Đao/ Stoneplits",
     role: "Tank",
     status: "Core",
-    region: "VN",
+    region: "VN"
   },
   {
     id: "1029384763",
@@ -713,8 +713,8 @@ const members: Member[] = [
     weapon: "9K9T",
     role: "DPS",
     status: "Flex",
-    region: "NA",
-  },
+    region: "NA"
+  }
 ];
 
 const MembersPage = () => {
@@ -723,20 +723,27 @@ const MembersPage = () => {
     id: "",
     status: "",
     role: "",
-    region: "",
+    region: ""
   });
 
   const filteredMembers = useMemo(() => {
-    return members.filter((member) => {
+    return members.filter(member => {
       const matchesName =
         member.name.toLowerCase().includes(filters.name.toLowerCase()) ||
         filters.name === "";
       const matchesId = member.id.includes(filters.id) || filters.id === "";
       const matchesStatus =
-        member.status === filters.status || filters.status === "";
-      const matchesRole = member.role === filters.role || filters.role === "";
+        filters.status === "all" ||
+        member.status === filters.status ||
+        filters.status === "";
+      const matchesRole =
+        filters.role === "all" ||
+        member.role === filters.role ||
+        filters.role === "";
       const matchesRegion =
-        member.region === filters.region || filters.region === "";
+        filters.region === "all" ||
+        member.region === filters.region ||
+        filters.region === "";
 
       return (
         matchesName &&
@@ -754,7 +761,7 @@ const MembersPage = () => {
       id: "",
       status: "",
       role: "",
-      region: "",
+      region: ""
     });
   };
 
@@ -776,7 +783,7 @@ const MembersPage = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {filteredMembers && filteredMembers.length > 0 ? (
-            filteredMembers.map((member) => (
+            filteredMembers.map(member => (
               <Card key={member.id}>
                 <CardHeader className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">

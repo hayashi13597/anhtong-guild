@@ -7,7 +7,7 @@ import { AnimatedThemeToggler } from "./AnimatedThemeToggler";
 
 const navLinks = [
   { name: "Nội Quy", sectionId: "rules" },
-  { name: "Cách Tham Gia", sectionId: "join" },
+  { name: "Cách Tham Gia", sectionId: "join" }
 ] as const;
 
 export default function Header() {
@@ -36,7 +36,7 @@ export default function Header() {
           </div>
 
           <nav className="hidden md:flex items-center gap-5">
-            {navLinks.map((link) => (
+            {navLinks.map(link => (
               <Button
                 key={link.name}
                 variant="ghost"
@@ -71,7 +71,7 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden border-t border-border bg-background/95 backdrop-blur-sm">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col gap-4">
-              {navLinks.map((link) => (
+              {navLinks.map(link => (
                 <Button
                   key={link.name}
                   variant="ghost"

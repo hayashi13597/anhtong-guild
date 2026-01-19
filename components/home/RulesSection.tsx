@@ -4,23 +4,23 @@ const rules = [
   {
     title: "Nghiêm cấm công kích cá nhân",
     description:
-      "Tuyệt đối không lăng mạ, miệt thị, xúc phạm, bắt nạt hay công kích cá nhân dưới mọi hình thức (trực tiếp hoặc gián tiếp). Bạn có thể tranh luận, nhưng hãy tranh luận một cách văn minh.",
+      "Tuyệt đối không lăng mạ, miệt thị, xúc phạm, bắt nạt hay công kích cá nhân dưới mọi hình thức (trực tiếp hoặc gián tiếp). Bạn có thể tranh luận, nhưng hãy tranh luận một cách văn minh."
   },
   {
     title: "Không phân biệt đối xử",
     description:
-      "Cấm tuyệt đối các nội dung mang tính phân biệt chủng tộc, giới tính, tôn giáo, hoặc vùng miền dưới mọi hình thức.",
+      "Cấm tuyệt đối các nội dung mang tính phân biệt chủng tộc, giới tính, tôn giáo, hoặc vùng miền dưới mọi hình thức."
   },
   {
     title: "Giữ thái độ lịch sự, thân thiện",
     description:
-      "Hãy cư xử đúng mực và tôn trọng lẫn nhau. Cộng đồng được tạo ra để giải trí và giao lưu, không phải để gây căng thẳng hay mâu thuẫn.",
+      "Hãy cư xử đúng mực và tôn trọng lẫn nhau. Cộng đồng được tạo ra để giải trí và giao lưu, không phải để gây căng thẳng hay mâu thuẫn."
   },
   {
     title: "Hạn chế sử dụng từ ngữ thô tục",
     description:
-      "Vui lòng sử dụng ngôn ngữ phù hợp, đặc biệt trong các kênh chat chung. Tránh gây khó chịu cho người khác.",
-  },
+      "Vui lòng sử dụng ngôn ngữ phù hợp, đặc biệt trong các kênh chat chung. Tránh gây khó chịu cho người khác."
+  }
 ] as const;
 
 export default function RulesSection() {

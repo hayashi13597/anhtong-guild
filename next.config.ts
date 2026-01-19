@@ -3,9 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   typedRoutes: true,
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true
   },
-  output: "export",
+  output: "export"
 };
 
 export default nextConfig;
