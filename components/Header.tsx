@@ -2,12 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { AnimatedThemeToggler } from "./AnimatedThemeToggler";
 
 const navLinks = [
-  { name: "Nội Quy", sectionId: "rules" },
-  { name: "Cách Tham Gia", sectionId: "join" }
+  { name: "Thành Viên", sectionId: "members", link: "/members" }
 ] as const;
 
 export default function Header() {
@@ -26,14 +26,14 @@ export default function Header() {
       <header className="sticky top-0 z-50 backdrop-blur-md border-b border-border bg-background/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold">AT</span>
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold">AnhTong</h1>
             </div>
-          </div>
+          </Link>
 
           <nav className="hidden md:flex items-center gap-5">
             {navLinks.map(link => (
@@ -43,7 +43,11 @@ export default function Header() {
                 onClick={() => scrollToSection(link.sectionId)}
                 className="font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
-                {link.name}
+                {link.link ? (
+                  <Link href={link.link}>{link.name}</Link>
+                ) : (
+                  link.name
+                )}
               </Button>
             ))}
           </nav>
