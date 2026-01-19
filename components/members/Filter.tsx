@@ -60,7 +60,7 @@ export function MembersFilter({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Name Filter */}
-        <div className="space-y-2">
+        <div className="flex flex-col space-y-2">
           <label htmlFor="name" className="text-sm font-medium">
             In-Game Name
           </label>
@@ -74,7 +74,7 @@ export function MembersFilter({
         </div>
 
         {/* ID Filter */}
-        <div className="space-y-2">
+        <div className="flex flex-col space-y-2">
           <label htmlFor="id" className="text-sm font-medium">
             ID
           </label>
@@ -88,7 +88,7 @@ export function MembersFilter({
         </div>
 
         {/* Status Filter */}
-        <div className="space-y-2">
+        <div className="flex flex-col space-y-2">
           <label htmlFor="status" className="text-sm font-medium">
             Status
           </label>
@@ -105,7 +105,7 @@ export function MembersFilter({
         </div>
 
         {/* Role Filter */}
-        <div className="space-y-2">
+        <div className="flex flex-col space-y-2">
           <label htmlFor="role" className="text-sm font-medium">
             Role
           </label>
@@ -123,7 +123,7 @@ export function MembersFilter({
         </div>
 
         {/* Region Filter */}
-        <div className="space-y-2">
+        <div className="flex flex-col space-y-2">
           <label htmlFor="region" className="text-sm font-medium">
             Region
           </label>
