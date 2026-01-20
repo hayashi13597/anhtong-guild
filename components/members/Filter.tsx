@@ -2,6 +2,7 @@
 
 import React from "react";
 
+import { FilterState, RegionFilter, RoleFilter } from "@/app/members/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,13 +13,6 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { X } from "lucide-react";
-
-type FilterState = {
-  name: string;
-  id: string;
-  role: string;
-  region: string;
-};
 
 type MembersFilterProps = {
   filters: FilterState;
@@ -39,15 +33,19 @@ export function MembersFilter({
     onFilterChange({ ...filters, id: e.target.value });
   };
 
-  const handleRoleChange = (value: string) => {
-    onFilterChange({ ...filters, role: value });
+  const handleRoleChange = (value: RoleFilter) => {
+    onFilterChange({ ...filters, role: value as RoleFilter });
   };
 
-  const handleRegionChange = (value: string) => {
-    onFilterChange({ ...filters, region: value });
+  const handleRegionChange = (value: RegionFilter) => {
+    onFilterChange({ ...filters, region: value as RegionFilter });
   };
 
-  const isFiltered = Object.values(filters).some(value => value !== "");
+  const isFiltered =
+    filters.name !== "" ||
+    filters.id !== "" ||
+    filters.role !== "all" ||
+    filters.region !== "all";
 
   return (
     <div className="space-y-4 p-6 bg-card rounded-lg border border-border">

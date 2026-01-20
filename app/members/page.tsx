@@ -13,6 +13,14 @@ import { useMemo, useState } from "react";
 type BadgeColor = "blue" | "green" | "yellow" | "red";
 type Role = "DPS" | "Healer" | "Tank";
 type Region = "NA" | "EU" | "VN";
+export type RoleFilter = Role | "all";
+export type RegionFilter = Region | "all";
+export type FilterState = {
+  name: string;
+  id: string;
+  role: RoleFilter;
+  region: RegionFilter;
+};
 
 const getColorForBadge = (badgeColor: BadgeColor | Role | Region) => {
   switch (badgeColor) {
@@ -564,29 +572,35 @@ const members: Member[] = [
 ];
 
 const MembersPage = () => {
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<FilterState>({
     name: "",
     id: "",
-    role: "",
-    region: ""
+    role: "all",
+    region: "all"
   });
 
   const filteredMembers = useMemo(() => {
     return members.filter(member => {
-      const matchesName =
-        member.name.toLowerCase().includes(filters.name.toLowerCase()) ||
-        filters.name === "";
-      const matchesId = member.id.includes(filters.id) || filters.id === "";
-      const matchesRole =
-        filters.role === "all" ||
-        member.role === filters.role ||
-        filters.role === "";
-      const matchesRegion =
-        filters.region === "all" ||
-        member.region === filters.region ||
-        filters.region === "";
+      if (
+        filters.name &&
+        !member.name.toLowerCase().includes(filters.name.toLowerCase())
+      ) {
+        return false;
+      }
 
-      return matchesName && matchesId && matchesRole && matchesRegion;
+      if (filters.id && !member.id.includes(filters.id)) {
+        return false;
+      }
+
+      if (filters.role !== "all" && member.role !== filters.role) {
+        return false;
+      }
+
+      if (filters.region !== "all" && member.region !== filters.region) {
+        return false;
+      }
+
+      return true;
     });
   }, [filters]);
 
@@ -643,7 +657,7 @@ const MembersPage = () => {
           ) : (
             <div className="col-span-full text-center py-8">
               <p className="text-muted-foreground">
-                No members found matching your filters.
+                Không tìm thấy thành viên nào
               </p>
             </div>
           )}
