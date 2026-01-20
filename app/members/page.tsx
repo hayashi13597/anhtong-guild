@@ -8,19 +8,8 @@ import {
   CardFooter,
   CardHeader
 } from "@/components/ui/card";
+import { BadgeColor, FilterState, Member, Region, Role } from "@/types";
 import { useMemo, useState } from "react";
-
-type BadgeColor = "blue" | "green" | "yellow" | "red";
-type Role = "DPS" | "Healer" | "Tank";
-type Region = "NA" | "EU" | "VN";
-export type RoleFilter = Role | "all";
-export type RegionFilter = Region | "all";
-export type FilterState = {
-  name: string;
-  id: string;
-  role: RoleFilter;
-  region: RegionFilter;
-};
 
 const getColorForBadge = (badgeColor: BadgeColor | Role | Region) => {
   switch (badgeColor) {
@@ -40,14 +29,6 @@ const getColorForBadge = (badgeColor: BadgeColor | Role | Region) => {
     default:
       return "bg-gray-200 text-gray-600";
   }
-};
-
-export type Member = {
-  id: string;
-  name: string;
-  weapon: string;
-  role: Role;
-  region: Region;
 };
 
 const members: Member[] = [

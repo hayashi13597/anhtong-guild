@@ -2,7 +2,6 @@
 
 import React from "react";
 
-import { FilterState, RegionFilter, RoleFilter } from "@/app/members/page";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import { FilterState, RegionFilter, RoleFilter } from "@/types";
 import { X } from "lucide-react";
 
 type MembersFilterProps = {

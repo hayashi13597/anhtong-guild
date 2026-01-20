@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { MorphingText } from "../MorphingText";
 
 export default function HeroSection() {
   const handleScroll = (
@@ -31,7 +32,8 @@ export default function HeroSection() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-balance leading-tight">
-            <span className="block text-foreground">ANHTONG</span>
+            {/* <span className="block text-foreground">ANHTONG</span> */}
+            <MorphingText texts={["AnhTong", "AnhTongVN"]} />
           </h1>
 
           <div className="max-w-3xl mx-auto space-y-3 sm:space-y-4 text-sm sm:text-base lg:text-lg text-muted-foreground px-2">
