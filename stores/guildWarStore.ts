@@ -561,9 +561,9 @@ const vnMembers = allMembers.filter(m => m.region === "VN");
 const naMembers = allMembers.filter(m => m.region === "NA");
 
 const defaultTeams: Team[] = [
-  { id: "t1", name: "Top", members: [] },
-  { id: "t2", name: "Mid", members: [] },
-  { id: "t3", name: "Bottom", members: [] }
+  { id: "t1", name: "Team 1", members: [] },
+  { id: "t2", name: "Team 2", members: [] },
+  { id: "t3", name: "Team 3", members: [] }
 ];
 
 export const useTeamStore = create<TeamStore>()(

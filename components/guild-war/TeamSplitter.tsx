@@ -228,9 +228,7 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
       {/* Drag Overlay for smooth dragging */}
       <DragOverlay>
         {activeUser ? (
-          <div className="p-3 border rounded-lg shadow-lg bg-background opacity-90">
-            <div className="font-medium text-sm">{activeUser.name}</div>
-          </div>
+          <UserCard user={activeUser} containerId="available" />
         ) : null}
       </DragOverlay>
     </DndContext>
