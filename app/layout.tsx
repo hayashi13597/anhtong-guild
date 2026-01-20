@@ -1,3 +1,4 @@
+import BackToTop from "@/components/BackToTop";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
@@ -9,21 +10,21 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  subsets: ["latin"]
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  subsets: ["latin"]
 });
 
 export const metadata: Metadata = {
   title: "Anh Tong Guild",
-  description: "Website for Anh Tong Guild",
+  description: "Website for Anh Tong Guild"
 };
 
 export default function RootLayout({
-  children,
+  children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
@@ -39,8 +40,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <Header />
-          {children}
+          <div className="pt-20">{children}</div>
           <Footer />
+          <BackToTop />
         </ThemeProvider>
       </body>
     </html>

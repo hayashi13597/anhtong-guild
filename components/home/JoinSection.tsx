@@ -6,61 +6,61 @@ const steps = [
   {
     number: "01",
     title: "Đọc Nội Quy & Chuẩn Bị Discord",
-    description: "Đọc kỹ nội quy và đảm bảo có thể hoạt động trên Discord",
+    description: "Đọc kỹ nội quy và đảm bảo có thể hoạt động trên Discord"
   },
   {
     number: "02",
     title: "Apply Guild Trong Game",
     description:
-      "Apply guild theo khu vực bạn chơi (NA/EU hoặc VN/Asia). Nếu đang bị cooldown 6 tiếng, hãy note lại cho BQT",
+      "Apply guild theo khu vực bạn chơi (NA/EU hoặc VN/Asia). Nếu đang bị cooldown 6 tiếng, hãy note lại cho BQT"
   },
   {
     number: "03",
     title: "Trả Lời Mẫu Câu Hỏi",
     description:
-      "Trả lời mẫu câu hỏi và đổi tên Discord trùng với tên trong game",
-  },
+      "Trả lời mẫu câu hỏi và đổi tên Discord trùng với tên trong game"
+  }
 ] as const;
 
 const questionTemplate = [
   {
     question: "Tên nhân vật trong game:",
-    hint: "Vui lòng cung cấp tên chính xác của nhân vật",
+    hint: "Vui lòng cung cấp tên chính xác của nhân vật"
   },
   {
     question: "Khu vực server:",
-    hint: "VN / Asia / NA / EU",
+    hint: "VN / Asia / NA / EU"
   },
   {
     question: "Kênh chat thường dùng:",
-    hint: "Discord / Facebook / Chat trong game / Khác",
+    hint: "Discord / Facebook / Chat trong game / Khác"
   },
   {
     question: "Khung giờ rảnh và tần suất online:",
-    hint: 'Ví dụ: "Ăn nằm cùng game, rảnh là lên" hoặc "Nô lệ tư bản nhưng vẫn đam mê"',
+    hint: 'Ví dụ: "Ăn nằm cùng game, rảnh là lên" hoặc "Nô lệ tư bản nhưng vẫn đam mê"'
   },
   {
     question: "Ưu tiên của bạn khi tham gia cộng đồng:",
-    hint: 'Ví dụ: "Giao lưu là chính, tìm nhóm chơi cùng" hoặc "Chơi game là chính, đi boss, chat khi cần"',
-  },
+    hint: 'Ví dụ: "Giao lưu là chính, tìm nhóm chơi cùng" hoặc "Chơi game là chính, đi boss, chat khi cần"'
+  }
 ] as const;
 
 const guildInfo = [
   {
     region: "NA/EU",
     guildName: "AnhTong",
-    guildID: "10000415",
+    guildID: "10000415"
   },
   {
     region: "VN/Asia",
     guildName: "AnhTongVN",
-    guildID: "10211185",
-  },
+    guildID: "10211185"
+  }
 ] as const;
 
 export default function JoinSection() {
   return (
-    <section id="join" className="py-16 sm:py-24 lg:py-32">
+    <section id="join" className="py-10 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12 sm:mb-16">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 text-foreground">
@@ -134,7 +134,7 @@ export default function JoinSection() {
 
             <Button variant="default" asChild>
               <Link
-                href="https://discord.com/channels/1457208671753867428/1457208672550785261"
+                href="https://discord.com/invite/anhtongvn"
                 target="_blank"
                 rel="noopener noreferrer"
               >

@@ -28,7 +28,7 @@ export const AnimatedThemeToggler = ({
     const observer = new MutationObserver(updateTheme);
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["class"],
+      attributeFilter: ["class"]
     });
 
     return () => observer.disconnect();
@@ -52,21 +52,21 @@ export const AnimatedThemeToggler = ({
     const y = top + height / 2;
     const maxRadius = Math.hypot(
       Math.max(left, window.innerWidth - left),
-      Math.max(top, window.innerHeight - top),
+      Math.max(top, window.innerHeight - top)
     );
 
     document.documentElement.animate(
       {
         clipPath: [
           `circle(0px at ${x}px ${y}px)`,
-          `circle(${maxRadius}px at ${x}px ${y}px)`,
-        ],
+          `circle(${maxRadius}px at ${x}px ${y}px)`
+        ]
       },
       {
         duration,
         easing: "ease-in-out",
-        pseudoElement: "::view-transition-new(root)",
-      },
+        pseudoElement: "::view-transition-new(root)"
+      }
     );
   }, [isDark, duration]);
 

@@ -34,7 +34,7 @@ const BackToTop: FC = () => {
         title="Back to top"
         className={cn(
           "inline-flex items-center justify-center w-11 h-11 rounded-full border-none shadow-lg",
-          !visible && "opacity-0 pointer-events-none",
+          !visible && "opacity-0 pointer-events-none"
         )}
       >
         <svg
