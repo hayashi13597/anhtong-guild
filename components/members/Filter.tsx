@@ -16,7 +16,6 @@ import { X } from "lucide-react";
 type FilterState = {
   name: string;
   id: string;
-  status: string;
   role: string;
   region: string;
 };
@@ -40,10 +39,6 @@ export function MembersFilter({
     onFilterChange({ ...filters, id: e.target.value });
   };
 
-  const handleStatusChange = (value: string) => {
-    onFilterChange({ ...filters, status: value });
-  };
-
   const handleRoleChange = (value: string) => {
     onFilterChange({ ...filters, role: value });
   };
@@ -56,17 +51,17 @@ export function MembersFilter({
 
   return (
     <div className="space-y-4 p-6 bg-card rounded-lg border border-border">
-      <h2 className="text-lg font-semibold">Filters</h2>
+      <h2 className="text-lg font-semibold">Bộ lọc</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Name Filter */}
         <div className="flex flex-col space-y-2">
           <label htmlFor="name" className="text-sm font-medium">
-            In-Game Name
+            Tên In-Game
           </label>
           <Input
             id="name"
-            placeholder="Search by name..."
+            placeholder="Tìm kiếm theo tên..."
             value={filters.name}
             onChange={handleNameChange}
             className="h-9"
@@ -80,41 +75,24 @@ export function MembersFilter({
           </label>
           <Input
             id="id"
-            placeholder="Search by ID..."
+            placeholder="Tìm kiếm theo ID..."
             value={filters.id}
             onChange={handleIdChange}
             className="h-9"
           />
         </div>
 
-        {/* Status Filter */}
-        <div className="flex flex-col space-y-2">
-          <label htmlFor="status" className="text-sm font-medium">
-            Status
-          </label>
-          <Select value={filters.status} onValueChange={handleStatusChange}>
-            <SelectTrigger id="status" className="h-9 w-full">
-              <SelectValue placeholder="All Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="Core">Core</SelectItem>
-              <SelectItem value="Flex">Flex</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
         {/* Role Filter */}
         <div className="flex flex-col space-y-2">
           <label htmlFor="role" className="text-sm font-medium">
-            Role
+            Vai trò
           </label>
           <Select value={filters.role} onValueChange={handleRoleChange}>
             <SelectTrigger id="role" className="h-9 w-full">
-              <SelectValue placeholder="All Roles" />
+              <SelectValue placeholder="Tất cả" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="all">Tất cả</SelectItem>
               <SelectItem value="DPS">DPS</SelectItem>
               <SelectItem value="Healer">Healer</SelectItem>
               <SelectItem value="Tank">Tank</SelectItem>
@@ -125,14 +103,14 @@ export function MembersFilter({
         {/* Region Filter */}
         <div className="flex flex-col space-y-2">
           <label htmlFor="region" className="text-sm font-medium">
-            Region
+            Khu vực
           </label>
           <Select value={filters.region} onValueChange={handleRegionChange}>
             <SelectTrigger id="region" className="h-9 w-full">
-              <SelectValue placeholder="All Regions" />
+              <SelectValue placeholder="Tất cả" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Regions</SelectItem>
+              <SelectItem value="all">Tất cả</SelectItem>
               <SelectItem value="NA">NA</SelectItem>
               <SelectItem value="EU">EU</SelectItem>
               <SelectItem value="VN">VN</SelectItem>
@@ -150,7 +128,7 @@ export function MembersFilter({
             className="gap-2 bg-transparent"
           >
             <X className="w-4 h-4" />
-            Clear Filters
+            Đặt lại bộ lọc
           </Button>
         </div>
       )}

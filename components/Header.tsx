@@ -8,8 +8,9 @@ import { AnimatedThemeToggler } from "./AnimatedThemeToggler";
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { name: "Thành viên", href: "/members" },
-  { name: "Guild War", href: "/guild-war" }
+  { name: "Trang chủ", href: "/" },
+  { name: "Thành Viên", href: "/members" },
+  { name: "Bang Chiến", href: "/guild-war" }
 ] as const;
 
 const Header = () => {

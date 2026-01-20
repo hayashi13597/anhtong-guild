@@ -1,3 +1,4 @@
+import BackToTop from "@/components/BackToTop";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
@@ -41,6 +42,7 @@ export default function RootLayout({
           <Header />
           <div className="pt-20">{children}</div>
           <Footer />
+          <BackToTop />
         </ThemeProvider>
       </body>
     </html>
