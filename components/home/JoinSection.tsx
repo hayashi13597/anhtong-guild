@@ -134,7 +134,7 @@ export default function JoinSection() {
 
             <Button variant="default" asChild>
               <Link
-                href="https://discord.com/channels/1457208671753867428/1457208672550785261"
+                href="https://discord.com/invite/anhtongvn"
                 target="_blank"
                 rel="noopener noreferrer"
               >

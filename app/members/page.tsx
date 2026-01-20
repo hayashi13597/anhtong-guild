@@ -766,7 +766,7 @@ const MembersPage = () => {
   };
 
   return (
-    <main className="max-w-7xl mx-auto py-16 sm:py-24 lg:py-32 space-y-10">
+    <main className="max-w-7xl mx-auto py-10 lg:py-20 space-y-10">
       <h1 className="text-4xl font-bold text-center">Danh Sách Thành Viên</h1>
 
       {/* Filter */}
