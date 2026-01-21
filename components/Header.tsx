@@ -5,11 +5,9 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AnimatedThemeToggler } from "./AnimatedThemeToggler";
-import { Button } from "./ui/button";
 
 const menuItems = [
   { name: "Trang chủ", href: "/" },
-  { name: "Thành Viên", href: "/members" },
   { name: "Bang Chiến", href: "/guild-war" }
 ] as const;
 
@@ -97,11 +95,6 @@ const Header = () => {
                 </ul>
               </div>
               <div className="flex w-full flex-col space-y-3 sm:flex-row sm:gap-3 sm:space-y-0 md:w-fit">
-                <Button asChild variant="outline" size="sm">
-                  <Link href="#">
-                    <span>Login</span>
-                  </Link>
-                </Button>
                 <AnimatedThemeToggler className="hidden lg:block" />
               </div>
             </div>

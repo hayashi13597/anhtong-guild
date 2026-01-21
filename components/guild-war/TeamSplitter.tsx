@@ -16,15 +16,18 @@ import {
   SortableContext,
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
-import { Plus } from "lucide-react";
-import { useState } from "react";
+import { Plus, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getColorForBadge } from "@/lib/color";
 import { cn } from "@/lib/utils";
-import { useTeamStore } from "@/stores/guildWarStore";
-import { Member } from "@/types";
+import { useAuthStore } from "@/stores/authStore";
+import { useGuildWarStore, type TeamMember } from "@/stores/eventStore";
+import { Badge } from "../ui/badge";
 import TeamCard from "./TeamCard";
 import UserCard from "./UserCard";
 
@@ -54,13 +57,37 @@ function AvailableUsersDroppable({
 }
 
 export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
-  const availableUsers = useTeamStore(state => state[region].availableUsers);
-  const teams = useTeamStore(state => state[region].teams);
-  const addTeam = useTeamStore(state => state.addTeam);
-  const moveUser = useTeamStore(state => state.moveUser);
+  const { availableUsers, teams, isLoading, error } = useGuildWarStore(
+    state => state[region]
+  );
+  const addTeam = useGuildWarStore(state => state.addTeam);
+  const moveUser = useGuildWarStore(state => state.moveUser);
+  const deleteUser = useGuildWarStore(state => state.deleteUser);
+  const fetchEvent = useGuildWarStore(state => state.fetchEvent);
 
-  const [activeUser, setActiveUser] = useState<Member | null>(null);
+  const user = useAuthStore(state => state.user);
+  const isAdmin = user?.isAdmin ?? false;
+
+  const [activeUser, setActiveUser] = useState<TeamMember | null>(null);
   const [overContainerId, setOverContainerId] = useState<string | null>(null);
+
+  // Fetch data on mount
+  useEffect(() => {
+    fetchEvent(region);
+  }, [region, fetchEvent]);
+
+  const handleRefresh = async () => {
+    await fetchEvent(region);
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!isAdmin) return;
+    try {
+      await deleteUser(region, userId);
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -92,7 +119,7 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    const user = active.data.current?.user as Member | undefined;
+    const user = active.data.current?.user as TeamMember | undefined;
     if (user) {
       setActiveUser(user);
     }
@@ -130,34 +157,63 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
 
     if (!activeContainer || !overContainer) return;
 
-    // If same container, handle reordering
-    if (activeContainer === overContainer) {
-      const items =
-        overContainer === "available"
-          ? availableUsers
-          : teams.find(t => t.id === overContainer)?.members || [];
-
-      const oldIndex = items.findIndex(m => m.id === activeId);
-      const newIndex = items.findIndex(m => m.id === overId);
-
-      if (oldIndex !== newIndex && newIndex !== -1) {
-        moveUser(region, activeId, activeContainer, overContainer, newIndex);
-      }
-    } else {
-      // Moving to different container
-      const overItems =
-        overContainer === "available"
-          ? availableUsers
-          : teams.find(t => t.id === overContainer)?.members || [];
-
-      let newIndex = overItems.findIndex(m => m.id === overId);
-      if (newIndex === -1) {
-        newIndex = overItems.length;
-      }
-
-      moveUser(region, activeId, activeContainer, overContainer, newIndex);
+    // Only move if containers are different (no reordering within container)
+    if (activeContainer !== overContainer) {
+      moveUser(region, activeId, activeContainer, overContainer);
     }
   };
+
+  const dpsCount = availableUsers.filter(m => m.role === "DPS").length;
+  const healerCount = availableUsers.filter(m => m.role === "Healer").length;
+  const tankCount = availableUsers.filter(m => m.role === "Tank").length;
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+            </CardHeader>
+            <Separator />
+            <CardContent className="space-y-2">
+              {[1, 2, 3, 4, 5].map(i => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+        <div className="lg:col-span-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-32" />
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {[1, 2, 3].map(j => (
+                    <Skeleton key={j} className="h-10 w-full" />
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-destructive mb-4">{error}</p>
+        <Button onClick={handleRefresh} variant="outline">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Thử lại
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <DndContext
@@ -172,15 +228,23 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>Thành viên chưa phân công</CardTitle>
-              <div className="text-sm text-muted-foreground">
-                Còn {availableUsers.length} người
+              <CardTitle>Thành viên đã đăng ký</CardTitle>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge className={getColorForBadge("DPS")}>
+                  DPS: {dpsCount}
+                </Badge>
+                <Badge className={getColorForBadge("Healer")}>
+                  Healer: {healerCount}
+                </Badge>
+                <Badge className={getColorForBadge("Tank")}>
+                  Tank: {tankCount}
+                </Badge>
               </div>
             </CardHeader>
 
             <Separator />
 
-            <CardContent>
+            <CardContent className="px-4">
               <SortableContext
                 items={availableUsers.map(u => u.id)}
                 strategy={verticalListSortingStrategy}
@@ -189,8 +253,8 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                   isOver={overContainerId === "available"}
                 >
                   {availableUsers.length === 0 ? (
-                    <div className="text-center py-8 border-2 border-dashed rounded-lg">
-                      Tất cả đã được phân công
+                    <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
+                      Không có thành viên nào
                     </div>
                   ) : (
                     availableUsers.map(user => (
@@ -198,6 +262,8 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                         key={user.id}
                         user={user}
                         containerId="available"
+                        isAdmin={isAdmin}
+                        onDelete={handleDeleteUser}
                       />
                     ))
                   )}
@@ -218,9 +284,15 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {teams.map(team => (
-              <TeamCard key={team.id} team={team} region={region} />
-            ))}
+            {teams.length > 0 ? (
+              teams.map(team => (
+                <TeamCard key={team.id} team={team} region={region} />
+              ))
+            ) : (
+              <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground col-span-full">
+                Chưa có nhóm nào được tạo
+              </div>
+            )}
           </div>
         </div>
       </div>
