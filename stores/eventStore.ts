@@ -32,14 +32,19 @@ interface RegionData {
   teams: Team[];
   isLoading: boolean;
   error: string | null;
+  lastFetched: number | null; // Timestamp for cache validation
 }
+
+// Cache duration in milliseconds (5 minutes)
+const CACHE_DURATION = 5 * 60 * 1000;
 
 interface GuildWarStore {
   VN: RegionData;
   NA: RegionData;
 
   // Data fetching
-  fetchEvent: (region: RegionKey) => Promise<void>;
+  fetchEvent: (region: RegionKey, forceRefresh?: boolean) => Promise<void>;
+  invalidateCache: (region: RegionKey) => void;
 
   // Admin actions
   addTeam: (region: RegionKey, name?: string) => Promise<void>;
@@ -117,14 +122,41 @@ const initialRegionData: RegionData = {
   availableUsers: [],
   teams: [],
   isLoading: false,
-  error: null
+  error: null,
+  lastFetched: null
 };
 
 export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
   VN: { ...initialRegionData },
   NA: { ...initialRegionData },
 
-  fetchEvent: async (region: RegionKey) => {
+  invalidateCache: (region: RegionKey) => {
+    set(state => ({
+      [region]: { ...state[region], lastFetched: null }
+    }));
+  },
+
+  fetchEvent: async (region: RegionKey, forceRefresh = false) => {
+    const state = get();
+    const regionData = state[region];
+    const now = Date.now();
+
+    // Check if cache is still valid
+    if (
+      !forceRefresh &&
+      regionData.lastFetched &&
+      now - regionData.lastFetched < CACHE_DURATION &&
+      regionData.event !== null
+    ) {
+      // Cache is still valid, skip fetch
+      return;
+    }
+
+    // Prevent duplicate requests while loading
+    if (regionData.isLoading) {
+      return;
+    }
+
     set(state => ({
       [region]: { ...state[region], isLoading: true, error: null }
     }));
@@ -157,7 +189,8 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
           availableUsers,
           teams,
           isLoading: false,
-          error: null
+          error: null,
+          lastFetched: Date.now()
         }
       });
     } catch (error) {
@@ -183,11 +216,13 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
       set(state => ({
         [region]: {
           ...state[region],
-          teams: [...state[region].teams, apiTeamToTeam(newTeam)]
+          teams: [...state[region].teams, apiTeamToTeam(newTeam)],
+          lastFetched: null // Invalidate cache
         }
       }));
     } catch (error) {
       console.error("Failed to create team:", error);
+      throw error;
     }
   },
 
@@ -204,11 +239,13 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
           ...state[region],
           teams: state[region].teams.map(t =>
             t.id === teamId ? { ...t, name } : t
-          )
+          ),
+          lastFetched: null // Invalidate cache
         }
       }));
     } catch (error) {
       console.error("Failed to rename team:", error);
+      throw error;
     }
   },
 
@@ -227,11 +264,13 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
         [region]: {
           ...state[region],
           teams: state[region].teams.filter(t => t.id !== teamId),
-          availableUsers: [...state[region].availableUsers, ...membersToMove]
+          availableUsers: [...state[region].availableUsers, ...membersToMove],
+          lastFetched: null // Invalidate cache
         }
       }));
     } catch (error) {
       console.error("Failed to delete team:", error);
+      throw error;
     }
   },
 
@@ -259,11 +298,13 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
           ),
           teams: state[region].teams.map(t =>
             t.id === teamId ? { ...t, members: [...t.members, user] } : t
-          )
+          ),
+          lastFetched: null // Invalidate cache
         }
       }));
     } catch (error) {
       console.error("Failed to assign user to team:", error);
+      throw error;
     }
   },
 
@@ -289,11 +330,13 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
             t.id === teamId
               ? { ...t, members: t.members.filter(m => m.id !== userId) }
               : t
-          )
+          ),
+          lastFetched: null // Invalidate cache
         }
       }));
     } catch (error) {
       console.error("Failed to remove user from team:", error);
+      throw error;
     }
   },
 
@@ -375,7 +418,8 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
         [region]: {
           ...state[region],
           availableUsers: newAvailable,
-          teams: newTeams
+          teams: newTeams,
+          lastFetched: null // Invalidate cache
         }
       };
     });
@@ -399,7 +443,8 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
           ...state[region],
           availableUsers: state[region].availableUsers.filter(
             u => u.id !== userId
-          )
+          ),
+          lastFetched: null // Invalidate cache
         }
       }));
     } catch (error) {
@@ -411,9 +456,10 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
   registerUser: async data => {
     try {
       await api.signup(data);
-      // Refresh the event to show the new user
+      // Force refresh to show the new user
       const region = data.region.toUpperCase() as RegionKey;
-      get().fetchEvent(region);
+      get().invalidateCache(region);
+      await get().fetchEvent(region, true);
     } catch (error) {
       throw error;
     }

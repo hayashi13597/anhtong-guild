@@ -17,7 +17,7 @@ interface TeamsViewProps {
 
 function TeamMemberRow({ member }: { member: TeamMember }) {
   return (
-    <div className="flex items-center justify-between py-1.5 px-2">
+    <div className="border rounded-lg shadow-sm bg-background flex items-center justify-between py-2 px-3">
       <div className="flex-1">
         <div className="font-medium text-sm">{member.name}</div>
         {member.classes && (
@@ -40,9 +40,9 @@ function TeamCard({ team }: { team: Team }) {
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">{team.name}</CardTitle>
-        <div className="flex items-center gap-2 mt-1">
+      <CardHeader>
+        <CardTitle>{team.name}</CardTitle>
+        <div className="flex items-center gap-2 mt-2">
           <Badge className={getColorForBadge("DPS")}>DPS: {dpsCount}</Badge>
           <Badge className={getColorForBadge("Healer")}>
             Heal: {healerCount}
