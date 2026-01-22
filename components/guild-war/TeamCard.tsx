@@ -34,7 +34,8 @@ function TeamCard({
   isMobile,
   selectedUserId,
   onAssignUser,
-  onRemoveUser
+  onRemoveUser,
+  dayFilter
 }: {
   team: Team;
   region: "VN" | "NA";
@@ -42,6 +43,7 @@ function TeamCard({
   selectedUserId?: string | null;
   onAssignUser?: (teamId: string) => void;
   onRemoveUser?: (userId: string, teamId: string) => void;
+  dayFilter?: "sat" | "sun";
 }) {
   const renameTeam = useGuildWarStore(state => state.renameTeam);
   const deleteTeam = useGuildWarStore(state => state.deleteTeam);
@@ -171,6 +173,7 @@ function TeamCard({
                   containerId={team.id}
                   isMobile={isMobile}
                   onRemove={userId => onRemoveUser?.(userId, team.id)}
+                  dayFilter={dayFilter}
                 />
               ))
             )}

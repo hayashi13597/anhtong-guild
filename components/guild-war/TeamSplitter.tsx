@@ -549,6 +549,7 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                             isMobile={isMobile}
                             isSelected={selectedUserId === user.id}
                             onSelect={handleSelectUser}
+                            dayFilter="sat"
                           />
                         ))
                       )}
@@ -580,6 +581,7 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                       selectedUserId={selectedUserId}
                       onAssignUser={handleAssignToTeam}
                       onRemoveUser={handleRemoveFromTeam}
+                      dayFilter="sat"
                     />
                   ))
                 ) : (
@@ -642,6 +644,7 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                             isMobile={isMobile}
                             isSelected={selectedUserId === user.id}
                             onSelect={handleSelectUser}
+                            dayFilter="sun"
                           />
                         ))
                       )}
@@ -673,6 +676,7 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                       selectedUserId={selectedUserId}
                       onAssignUser={handleAssignToTeam}
                       onRemoveUser={handleRemoveFromTeam}
+                      dayFilter="sun"
                     />
                   ))
                 ) : (

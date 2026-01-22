@@ -29,7 +29,8 @@ function UserCard({
   isMobile,
   isSelected,
   onSelect,
-  onRemove
+  onRemove,
+  dayFilter
 }: {
   user: TeamMember;
   className?: string;
@@ -40,6 +41,7 @@ function UserCard({
   isSelected?: boolean;
   onSelect?: (userId: string, containerId: string) => void;
   onRemove?: (userId: string) => void;
+  dayFilter?: "sat" | "sun";
 }) {
   // Create unique ID combining user ID and container to allow same user in multiple lists
   const uniqueId = `${containerId}-${user.id}`;
@@ -72,8 +74,7 @@ function UserCard({
     containerId === "available-saturday" ||
     containerId === "available-sunday";
   const canDelete = isAdmin && isAvailableList && onDelete;
-  const canRemove =
-    isMobile && !isAvailableList && onRemove;
+  const canRemove = isMobile && !isAvailableList && onRemove;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleDeleteClick = (e: React.MouseEvent) => {
@@ -133,11 +134,51 @@ function UserCard({
                 {formatClasses(user.secondaryClass)}
               </div>
             )}
-            {user.timeSlots && user.timeSlots.length > 0 && (
-              <div className="text-xs text-muted-foreground/60 pt-1">
-                {user.timeSlots.map(slot => slot.split("_")[1]).join(", ")}
-              </div>
-            )}
+            {user.timeSlots &&
+              user.timeSlots.length > 0 &&
+              (() => {
+                const filteredSlots = user.timeSlots
+                  .filter(
+                    slot => !dayFilter || slot.startsWith(dayFilter + "_")
+                  )
+                  .map(slot => slot.split("_")[1]);
+
+                if (filteredSlots.length === 0) return null;
+
+                // Deduplicate and sort time slots by start time
+                const sortedSlots = [...new Set(filteredSlots)].sort((a, b) => {
+                  const startA = a.split("-")[0];
+                  const startB = b.split("-")[0];
+                  return startA.localeCompare(startB);
+                });
+
+                // Group continuous time slots into ranges
+                const ranges: { start: string; end: string }[] = [];
+                for (const slot of sortedSlots) {
+                  const [start, end] = slot.split("-");
+                  const lastRange = ranges[ranges.length - 1];
+
+                  // Check if this slot continues from the last range
+                  if (lastRange && lastRange.end === start) {
+                    // Extend the current range
+                    lastRange.end = end;
+                  } else {
+                    // Start a new range
+                    ranges.push({ start, end });
+                  }
+                }
+
+                // Format ranges for display
+                const displayText = ranges
+                  .map(r => `${r.start}–${r.end}`)
+                  .join(", ");
+
+                return (
+                  <div className="text-xs text-muted-foreground/60 pt-1">
+                    {displayText}
+                  </div>
+                );
+              })()}
           </div>
           <div className="flex flex-col gap-1">
             <Badge className={getColorForBadge(user.primaryRole)}>
