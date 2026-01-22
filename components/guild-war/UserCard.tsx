@@ -67,8 +67,13 @@ function UserCard({
     opacity: isDragging ? 0.5 : 1
   };
 
-  const canDelete = isAdmin && containerId === "available" && onDelete;
-  const canRemove = isMobile && containerId !== "available" && onRemove;
+  const isAvailableList =
+    containerId === "available" ||
+    containerId === "available-saturday" ||
+    containerId === "available-sunday";
+  const canDelete = isAdmin && isAvailableList && onDelete;
+  const canRemove =
+    isMobile && !isAvailableList && onRemove;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleDeleteClick = (e: React.MouseEvent) => {

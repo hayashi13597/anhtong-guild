@@ -162,8 +162,10 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
     if (!isAdmin) return;
     try {
       await deleteUser(region, userId);
+      toast.success("Đã xóa thành viên thành công");
     } catch (error) {
       console.error("Failed to delete user:", error);
+      toast.error("Không thể xóa thành viên. Vui lòng thử lại.");
     }
   };
 

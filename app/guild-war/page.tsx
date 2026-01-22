@@ -1,15 +1,18 @@
 "use client";
 
-import { MembersList } from "@/components/guild-war/MembersList";
 import TeamSplitter from "@/components/guild-war/TeamSplitter";
-import { TeamsView } from "@/components/guild-war/TeamsView";
+import UserCard from "@/components/guild-war/UserCard";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getColorForBadge } from "@/lib/color";
 import { useAuthStore } from "@/stores/authStore";
 import { useGuildWarStore } from "@/stores/eventStore";
 import { LogOut, Shield } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 const GuildWarPage = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -87,22 +90,300 @@ const GuildWarPage = () => {
 };
 
 function PublicView({ region }: { region: "VN" | "NA" }) {
+  const { availableUsers, teams } = useGuildWarStore(state => state[region]);
+
+  // Filter users and teams by day
+  const usersInSaturdayTeams = useMemo(() => {
+    const satTeams = teams.filter(t => t.day === "saturday");
+    return new Set(satTeams.flatMap(t => t.members.map(m => m.id)));
+  }, [teams]);
+
+  const usersInSundayTeams = useMemo(() => {
+    const sunTeams = teams.filter(t => t.day === "sunday");
+    return new Set(sunTeams.flatMap(t => t.members.map(m => m.id)));
+  }, [teams]);
+
+  const saturdayUsers = useMemo(
+    () =>
+      availableUsers.filter(
+        u =>
+          u.timeSlots.some(slot => slot.startsWith("sat_")) &&
+          !usersInSaturdayTeams.has(u.id)
+      ),
+    [availableUsers, usersInSaturdayTeams]
+  );
+
+  const sundayUsers = useMemo(
+    () =>
+      availableUsers.filter(
+        u =>
+          u.timeSlots.some(slot => slot.startsWith("sun_")) &&
+          !usersInSundayTeams.has(u.id)
+      ),
+    [availableUsers, usersInSundayTeams]
+  );
+
+  const saturdayTeams = useMemo(
+    () => teams.filter(t => t.day === "saturday"),
+    [teams]
+  );
+  const sundayTeams = useMemo(
+    () => teams.filter(t => t.day === "sunday"),
+    [teams]
+  );
+
+  // Calculate role counts
+  const satDpsCount = saturdayUsers.filter(m => m.primaryRole === "DPS").length;
+  const satHealerCount = saturdayUsers.filter(
+    m => m.primaryRole === "Healer"
+  ).length;
+  const satTankCount = saturdayUsers.filter(
+    m => m.primaryRole === "Tank"
+  ).length;
+
+  const sunDpsCount = sundayUsers.filter(m => m.primaryRole === "DPS").length;
+  const sunHealerCount = sundayUsers.filter(
+    m => m.primaryRole === "Healer"
+  ).length;
+  const sunTankCount = sundayUsers.filter(m => m.primaryRole === "Tank").length;
+
   return (
-    <div className="space-y-6 lg:space-y-8 pt-6 flex flex-col lg:flex-row gap-5">
-      {/* Members Section */}
-      <section className="w-full lg:w-1/4">
-        <h2 className="text-xl lg:text-2xl font-semibold mb-4">
-          Danh sách đăng ký
-        </h2>
-        <div className="w-full lg:max-w-md">
-          <MembersList region={region} />
+    <div className="space-y-6 p-3 sm:p-6">
+      {/* Saturday Section */}
+      <div>
+        <h2 className="text-xl font-bold mb-4">Thứ 7 (Saturday)</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+          {/* Available Users - Saturday */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base sm:text-lg">
+                  Thành viên đã đăng ký
+                </CardTitle>
+                <div className="flex items-center flex-wrap gap-2 mt-2">
+                  <Badge className={getColorForBadge("DPS")}>
+                    DPS: {satDpsCount}
+                  </Badge>
+                  <Badge className={getColorForBadge("Healer")}>
+                    Healer: {satHealerCount}
+                  </Badge>
+                  <Badge className={getColorForBadge("Tank")}>
+                    Tank: {satTankCount}
+                  </Badge>
+                </div>
+              </CardHeader>
+
+              <Separator />
+
+              <CardContent className="px-4">
+                <div className="space-y-2 max-h-150 overflow-y-auto min-h-20">
+                  {saturdayUsers.length === 0 ? (
+                    <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
+                      Không có thành viên nào
+                    </div>
+                  ) : (
+                    saturdayUsers.map(user => (
+                      <UserCard
+                        key={user.id}
+                        user={user}
+                        containerId="available-saturday"
+                      />
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Teams - Saturday */}
+          <div className="lg:col-span-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+              {saturdayTeams.length > 0 ? (
+                saturdayTeams.map(team => (
+                  <Card key={team.id} className="min-h-75">
+                    <CardHeader className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base sm:text-lg">
+                          {team.name}
+                        </CardTitle>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Badge className={getColorForBadge("DPS")}>
+                          DPS:{" "}
+                          {
+                            team.members.filter(
+                              member => member.primaryRole === "DPS"
+                            ).length
+                          }
+                        </Badge>
+                        <Badge className={getColorForBadge("Healer")}>
+                          Healer:{" "}
+                          {
+                            team.members.filter(
+                              member => member.primaryRole === "Healer"
+                            ).length
+                          }
+                        </Badge>
+                        <Badge className={getColorForBadge("Tank")}>
+                          Tank:{" "}
+                          {
+                            team.members.filter(
+                              member => member.primaryRole === "Tank"
+                            ).length
+                          }
+                        </Badge>
+                      </div>
+                    </CardHeader>
+
+                    <Separator />
+
+                    <CardContent>
+                      <div className="space-y-2 min-h-20">
+                        {team.members.length === 0 ? (
+                          <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
+                            Chưa có thành viên
+                          </div>
+                        ) : (
+                          team.members.map(user => (
+                            <UserCard
+                              key={user.id}
+                              user={user}
+                              containerId={team.id}
+                            />
+                          ))
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground col-span-full">
+                  Chưa có nhóm nào được tạo
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </section>
-      {/* Teams Section */}
-      <section className="flex-1">
-        <h2 className="text-xl lg:text-2xl font-semibold mb-4">Đội hình</h2>
-        <TeamsView region={region} />
-      </section>
+      </div>
+
+      {/* Sunday Section */}
+      <div>
+        <h2 className="text-xl font-bold mb-4">Chủ nhật (Sunday)</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+          {/* Available Users - Sunday */}
+          <div className="lg:col-span-1">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base sm:text-lg">
+                  Thành viên đã đăng ký
+                </CardTitle>
+                <div className="flex items-center flex-wrap gap-2 mt-2">
+                  <Badge className={getColorForBadge("DPS")}>
+                    DPS: {sunDpsCount}
+                  </Badge>
+                  <Badge className={getColorForBadge("Healer")}>
+                    Healer: {sunHealerCount}
+                  </Badge>
+                  <Badge className={getColorForBadge("Tank")}>
+                    Tank: {sunTankCount}
+                  </Badge>
+                </div>
+              </CardHeader>
+
+              <Separator />
+
+              <CardContent className="px-4">
+                <div className="space-y-2 max-h-150 overflow-y-auto min-h-20">
+                  {sundayUsers.length === 0 ? (
+                    <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
+                      Không có thành viên nào
+                    </div>
+                  ) : (
+                    sundayUsers.map(user => (
+                      <UserCard
+                        key={user.id}
+                        user={user}
+                        containerId="available-sunday"
+                      />
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Teams - Sunday */}
+          <div className="lg:col-span-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+              {sundayTeams.length > 0 ? (
+                sundayTeams.map(team => (
+                  <Card key={team.id} className="min-h-75">
+                    <CardHeader className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base sm:text-lg">
+                          {team.name}
+                        </CardTitle>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Badge className={getColorForBadge("DPS")}>
+                          DPS:{" "}
+                          {
+                            team.members.filter(
+                              member => member.primaryRole === "DPS"
+                            ).length
+                          }
+                        </Badge>
+                        <Badge className={getColorForBadge("Healer")}>
+                          Healer:{" "}
+                          {
+                            team.members.filter(
+                              member => member.primaryRole === "Healer"
+                            ).length
+                          }
+                        </Badge>
+                        <Badge className={getColorForBadge("Tank")}>
+                          Tank:{" "}
+                          {
+                            team.members.filter(
+                              member => member.primaryRole === "Tank"
+                            ).length
+                          }
+                        </Badge>
+                      </div>
+                    </CardHeader>
+
+                    <Separator />
+
+                    <CardContent>
+                      <div className="space-y-2 min-h-20">
+                        {team.members.length === 0 ? (
+                          <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
+                            Chưa có thành viên
+                          </div>
+                        ) : (
+                          team.members.map(user => (
+                            <UserCard
+                              key={user.id}
+                              user={user}
+                              containerId={team.id}
+                            />
+                          ))
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground col-span-full">
+                  Chưa có nhóm nào được tạo
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

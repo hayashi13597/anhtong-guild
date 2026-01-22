@@ -475,10 +475,20 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
     const state = get();
     const user = state[region].availableUsers.find(u => u.id === userId);
 
-    // Only allow deletion if user is in available list (not in a team)
+    // Check if user is in any team
+    const isInTeam = state[region].teams.some(team =>
+      team.members.some(m => m.id === userId)
+    );
+
+    if (isInTeam) {
+      toast.error("Không thể xóa thành viên đã được phân vào đội");
+      throw new Error("Cannot delete user who is assigned to a team");
+    }
+
+    // Only allow deletion if user is in available list
     if (!user) {
-      toast.warning("User not found or already assigned to a team");
-      return;
+      toast.warning("Không tìm thấy thành viên");
+      throw new Error("User not found");
     }
 
     try {
@@ -495,6 +505,9 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
       }));
     } catch (error) {
       console.error("Failed to delete user:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      toast.error(`Lỗi khi xóa thành viên: ${errorMessage}`);
       throw error;
     }
   },
