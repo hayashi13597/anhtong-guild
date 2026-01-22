@@ -163,9 +163,11 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
     }
   };
 
-  const dpsCount = availableUsers.filter(m => m.role === "DPS").length;
-  const healerCount = availableUsers.filter(m => m.role === "Healer").length;
-  const tankCount = availableUsers.filter(m => m.role === "Tank").length;
+  const dpsCount = availableUsers.filter(m => m.primaryRole === "DPS").length;
+  const healerCount = availableUsers.filter(
+    m => m.primaryRole === "Healer"
+  ).length;
+  const tankCount = availableUsers.filter(m => m.primaryRole === "Tank").length;
 
   if (isLoading) {
     return (

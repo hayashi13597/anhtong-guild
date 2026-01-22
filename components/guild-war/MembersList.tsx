@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatClasses } from "@/lib/classes";
 import { getColorForBadge } from "@/lib/color";
 import { useGuildWarStore, type TeamMember } from "@/stores/eventStore";
 
@@ -16,13 +17,28 @@ function MemberRow({ member }: { member: TeamMember }) {
     <div className="border rounded-lg shadow-sm bg-background flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50">
       <div className="flex-1">
         <div className="font-medium text-sm">{member.name}</div>
-        {member.classes && (
-          <div className="text-xs text-muted-foreground">{member.classes}</div>
+        <div className="text-xs text-muted-foreground">
+          {formatClasses(member.primaryClass)}
+        </div>
+        {member.secondaryClass && (
+          <div className="text-xs text-muted-foreground/70">
+            {formatClasses(member.secondaryClass)}
+          </div>
         )}
       </div>
-      {member.role && (
-        <Badge className={getColorForBadge(member.role)}>{member.role}</Badge>
-      )}
+      <div className="flex flex-col gap-1">
+        <Badge className={getColorForBadge(member.primaryRole)}>
+          {member.primaryRole}
+        </Badge>
+        {member.secondaryRole && (
+          <Badge
+            variant="outline"
+            className={getColorForBadge(member.secondaryRole)}
+          >
+            {member.secondaryRole}
+          </Badge>
+        )}
+      </div>
     </div>
   );
 }
@@ -38,9 +54,9 @@ export function MembersList({ region }: MembersListProps) {
     ...teams.flatMap(team => team.members)
   ];
 
-  const dpsCount = allMembers.filter(m => m.role === "DPS").length;
-  const healerCount = allMembers.filter(m => m.role === "Healer").length;
-  const tankCount = allMembers.filter(m => m.role === "Tank").length;
+  const dpsCount = allMembers.filter(m => m.primaryRole === "DPS").length;
+  const healerCount = allMembers.filter(m => m.primaryRole === "Healer").length;
+  const tankCount = allMembers.filter(m => m.primaryRole === "Tank").length;
 
   if (isLoading) {
     return (

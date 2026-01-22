@@ -94,14 +94,22 @@ function TeamCard({ team, region }: { team: Team; region: "VN" | "NA" }) {
 
         <div className="flex items-center gap-2">
           <Badge className={getColorForBadge("DPS")}>
-            DPS: {team.members.filter(member => member.role === "DPS").length}
+            DPS:{" "}
+            {team.members.filter(member => member.primaryRole === "DPS").length}
           </Badge>
           <Badge className={getColorForBadge("Healer")}>
             Healer:{" "}
-            {team.members.filter(member => member.role === "Healer").length}
+            {
+              team.members.filter(member => member.primaryRole === "Healer")
+                .length
+            }
           </Badge>
           <Badge className={getColorForBadge("Tank")}>
-            Tank: {team.members.filter(member => member.role === "Tank").length}
+            Tank:{" "}
+            {
+              team.members.filter(member => member.primaryRole === "Tank")
+                .length
+            }
           </Badge>
         </div>
       </CardHeader>

@@ -14,6 +14,7 @@ import {
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { formatClasses } from "@/lib/classes";
 import { getColorForBadge } from "@/lib/color";
 import { cn } from "@/lib/utils";
 import { type TeamMember } from "@/stores/eventStore";
@@ -87,15 +88,28 @@ function UserCard({
           <GripVertical className="w-4 h-4 text-muted-foreground" />
           <div className="flex-1 space-y-1">
             <div className="font-medium text-sm">{user.name}</div>
-            {user.classes && (
-              <div className="text-xs text-muted-foreground">
-                {user.classes}
+            <div className="text-xs text-muted-foreground">
+              {formatClasses(user.primaryClass)}
+            </div>
+            {user.secondaryClass && (
+              <div className="text-xs text-muted-foreground/70">
+                {formatClasses(user.secondaryClass)}
               </div>
             )}
           </div>
-          {user.role && (
-            <Badge className={getColorForBadge(user.role)}>{user.role}</Badge>
-          )}
+          <div className="flex flex-col gap-1">
+            <Badge className={getColorForBadge(user.primaryRole)}>
+              {user.primaryRole}
+            </Badge>
+            {user.secondaryRole && (
+              <Badge
+                variant="outline"
+                className={getColorForBadge(user.secondaryRole)}
+              >
+                {user.secondaryRole}
+              </Badge>
+            )}
+          </div>
           {canDelete && (
             <Button
               variant="ghost"

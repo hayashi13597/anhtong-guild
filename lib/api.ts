@@ -1,12 +1,28 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8787";
 
+export type ClassType =
+  | "strategicSword"
+  | "heavenquakerSpear"
+  | "namelessSword"
+  | "namelessSpear"
+  | "vernalUmbrella"
+  | "inkwellFan"
+  | "soulshadeUmbrella"
+  | "panaceaFan"
+  | "thundercryBlade"
+  | "stormreakerSpear"
+  | "infernalTwinblades"
+  | "mortalRopeDart";
+
 export interface User {
   id: number;
   username: string;
   region: string;
   isAdmin: boolean;
-  classes?: string | null;
-  role?: "dps" | "healer" | "tank" | null;
+  primaryClass: [ClassType, ClassType];
+  secondaryClass?: [ClassType, ClassType] | null;
+  primaryRole: "dps" | "healer" | "tank";
+  secondaryRole?: "dps" | "healer" | "tank" | null;
   createdAt?: string;
 }
 
@@ -111,8 +127,10 @@ class ApiClient {
   async signup(data: {
     username: string;
     region: "vn" | "na";
-    classes?: string;
-    role?: "dps" | "healer" | "tank";
+    primaryClass: [ClassType, ClassType];
+    secondaryClass?: [ClassType, ClassType];
+    primaryRole: "dps" | "healer" | "tank";
+    secondaryRole?: "dps" | "healer" | "tank";
   }): Promise<SignupResponse> {
     return this.request<SignupResponse>("/auth/signup", {
       method: "POST",

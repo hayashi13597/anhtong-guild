@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatClasses } from "@/lib/classes";
 import { getColorForBadge } from "@/lib/color";
 import {
   useGuildWarStore,
@@ -20,23 +21,41 @@ function TeamMemberRow({ member }: { member: TeamMember }) {
     <div className="border rounded-lg shadow-sm bg-background flex items-center justify-between py-2 px-3">
       <div className="flex-1">
         <div className="font-medium text-sm">{member.name}</div>
-        {member.classes && (
-          <div className="text-xs text-muted-foreground">{member.classes}</div>
+        <div className="text-xs text-muted-foreground">
+          {formatClasses(member.primaryClass)}
+        </div>
+        {member.secondaryClass && (
+          <div className="text-xs text-muted-foreground/70">
+            {formatClasses(member.secondaryClass)}
+          </div>
         )}
       </div>
-      {member.role && (
-        <Badge variant="outline" className={getColorForBadge(member.role)}>
-          {member.role}
+      <div className="flex flex-col gap-1">
+        <Badge
+          variant="outline"
+          className={getColorForBadge(member.primaryRole)}
+        >
+          {member.primaryRole}
         </Badge>
-      )}
+        {member.secondaryRole && (
+          <Badge
+            variant="outline"
+            className={getColorForBadge(member.secondaryRole)}
+          >
+            {member.secondaryRole}
+          </Badge>
+        )}
+      </div>
     </div>
   );
 }
 
 function TeamCard({ team }: { team: Team }) {
-  const dpsCount = team.members.filter(m => m.role === "DPS").length;
-  const healerCount = team.members.filter(m => m.role === "Healer").length;
-  const tankCount = team.members.filter(m => m.role === "Tank").length;
+  const dpsCount = team.members.filter(m => m.primaryRole === "DPS").length;
+  const healerCount = team.members.filter(
+    m => m.primaryRole === "Healer"
+  ).length;
+  const tankCount = team.members.filter(m => m.primaryRole === "Tank").length;
 
   return (
     <Card>

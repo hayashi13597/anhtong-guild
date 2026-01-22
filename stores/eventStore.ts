@@ -3,6 +3,7 @@
 import {
   api,
   type Team as ApiTeam,
+  type ClassType,
   type GuildEvent,
   type User
 } from "@/lib/api";
@@ -11,8 +12,10 @@ import { create } from "zustand";
 export interface TeamMember {
   id: string;
   name: string;
-  classes: string | null;
-  role: "DPS" | "Healer" | "Tank" | null;
+  primaryClass: [ClassType, ClassType];
+  secondaryClass: [ClassType, ClassType] | null;
+  primaryRole: "DPS" | "Healer" | "Tank";
+  secondaryRole: "DPS" | "Healer" | "Tank" | null;
   region: "VN" | "NA";
   apiId: number; // Original backend ID
 }
@@ -76,8 +79,10 @@ interface GuildWarStore {
   registerUser: (data: {
     username: string;
     region: "vn" | "na";
-    classes?: string;
-    role?: "dps" | "healer" | "tank";
+    primaryClass: [ClassType, ClassType];
+    secondaryClass?: [ClassType, ClassType];
+    primaryRole: "dps" | "healer" | "tank";
+    secondaryRole?: "dps" | "healer" | "tank";
   }) => Promise<void>;
 }
 
@@ -98,12 +103,17 @@ function convertRegion(region: string): "VN" | "NA" {
 }
 
 function userToMember(user: User): TeamMember {
+  // primaryRole is required, so we use a default if somehow null
+  const primaryRole = convertApiRole(user.primaryRole) || "DPS";
+
   return {
     id: `user-${user.id}`,
     apiId: user.id,
     name: user.username,
-    classes: user.classes ?? null,
-    role: convertApiRole(user.role),
+    primaryClass: user.primaryClass,
+    secondaryClass: user.secondaryClass || null,
+    primaryRole,
+    secondaryRole: convertApiRole(user.secondaryRole),
     region: convertRegion(user.region)
   };
 }

@@ -14,7 +14,6 @@ import {
   FieldGroup,
   FieldLabel
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -23,18 +22,54 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { classDisplayNames, classEnum, type ClassType } from "@/lib/classes";
 import { useGuildWarStore } from "@/stores/eventStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
-const signupSchema = z.object({
-  username: z.string().min(1, "Tên nhân vật là bắt buộc"),
-  classes: z.string().min(1, "Lớp nhân vật là bắt buộc"),
-  role: z.enum(["dps", "healer", "tank"], { message: "Vai trò là bắt buộc" }),
-  region: z.enum(["vn", "na"], { message: "Server là bắt buộc" })
-});
+const signupSchema = z
+  .object({
+    username: z.string().min(1, "Tên nhân vật là bắt buộc"),
+    primaryClass1: z.enum(classEnum, { message: "Lớp chính 1 là bắt buộc" }),
+    primaryClass2: z.enum(classEnum, { message: "Lớp chính 2 là bắt buộc" }),
+    secondaryClass1: z.enum(classEnum).optional(),
+    secondaryClass2: z.enum(classEnum).optional(),
+    primaryRole: z.enum(["dps", "healer", "tank"], {
+      message: "Vai trò chính là bắt buộc"
+    }),
+    secondaryRole: z.enum(["dps", "healer", "tank"]).optional(),
+    region: z.enum(["vn", "na"], { message: "Server là bắt buộc" })
+  })
+  .refine(data => data.primaryClass1 !== data.primaryClass2, {
+    message: "Hai lớp chính không được trùng nhau",
+    path: ["primaryClass2"]
+  })
+  .refine(
+    data => {
+      if (data.secondaryClass1 && data.secondaryClass2) {
+        return data.secondaryClass1 !== data.secondaryClass2;
+      }
+      return true;
+    },
+    {
+      message: "Hai lớp phụ không được trùng nhau",
+      path: ["secondaryClass2"]
+    }
+  )
+  .refine(
+    data => {
+      // Both secondary classes must be filled or both empty
+      const has1 = !!data.secondaryClass1;
+      const has2 = !!data.secondaryClass2;
+      return has1 === has2;
+    },
+    {
+      message: "Phải điền cả 2 lớp phụ hoặc để trống cả 2",
+      path: ["secondaryClass2"]
+    }
+  );
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
@@ -50,13 +85,16 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
 
   const defaultValues: SignupFormData = {
     username: "",
-    classes: "",
-    role: "dps",
+    primaryClass1: "strategicSword",
+    primaryClass2: "heavenquakerSpear",
+    secondaryClass1: undefined,
+    secondaryClass2: undefined,
+    primaryRole: "dps",
+    secondaryRole: undefined,
     region: defaultRegion ?? "vn"
   };
 
   const {
-    register,
     handleSubmit,
     control,
     reset,
@@ -72,11 +110,22 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
     setSuccess(null);
 
     try {
+      const primaryClass: [ClassType, ClassType] = [
+        data.primaryClass1,
+        data.primaryClass2
+      ];
+      const secondaryClass: [ClassType, ClassType] | undefined =
+        data.secondaryClass1 && data.secondaryClass2
+          ? [data.secondaryClass1, data.secondaryClass2]
+          : undefined;
+
       await registerUser({
         username: data.username,
         region: data.region,
-        classes: data.classes,
-        role: data.role
+        primaryClass,
+        secondaryClass,
+        primaryRole: data.primaryRole,
+        secondaryRole: data.secondaryRole
       });
       setSuccess("Đăng ký thành công!");
       reset(defaultValues);
@@ -100,13 +149,20 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
           <FieldGroup>
             <Field>
               <FieldLabel htmlFor="username">Tên nhân vật (In-game)</FieldLabel>
-              <Input
-                id="username"
-                type="text"
-                placeholder="Nhập tên nhân vật"
-                disabled={isLoading}
-                aria-invalid={!!errors.username}
-                {...register("username")}
+              <Controller
+                name="username"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    id="username"
+                    type="text"
+                    placeholder="Nhập tên nhân vật"
+                    disabled={isLoading}
+                    aria-invalid={!!errors.username}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    {...field}
+                  />
+                )}
               />
               {errors.username && (
                 <FieldDescription className="text-destructive">
@@ -115,27 +171,148 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
               )}
             </Field>
 
-            <Field>
-              <FieldLabel htmlFor="classes">Lớp nhân vật</FieldLabel>
-              <Input
-                id="classes"
-                type="text"
-                placeholder="VD: Quạt dù/Silkbind"
-                disabled={isLoading}
-                aria-invalid={!!errors.classes}
-                {...register("classes")}
-              />
-              {errors.classes && (
-                <FieldDescription className="text-destructive">
-                  {errors.classes.message}
-                </FieldDescription>
-              )}
-            </Field>
+            <div className="space-y-2">
+              <FieldLabel>Hướng build chính</FieldLabel>
+              <div className="grid grid-cols-2 gap-4">
+                <Field>
+                  <Controller
+                    name="primaryClass1"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={isLoading}
+                      >
+                        <SelectTrigger
+                          id="primaryClass1"
+                          aria-invalid={!!errors.primaryClass1}
+                        >
+                          <SelectValue placeholder="Chọn lớp" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {classEnum.map(cls => (
+                            <SelectItem key={cls} value={cls}>
+                              {classDisplayNames[cls]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </Field>
+
+                <Field>
+                  <Controller
+                    name="primaryClass2"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={isLoading}
+                      >
+                        <SelectTrigger
+                          id="primaryClass2"
+                          aria-invalid={!!errors.primaryClass2}
+                        >
+                          <SelectValue placeholder="Chọn lớp" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {classEnum.map(cls => (
+                            <SelectItem key={cls} value={cls}>
+                              {classDisplayNames[cls]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.primaryClass2 && (
+                    <FieldDescription className="text-destructive">
+                      {errors.primaryClass2.message}
+                    </FieldDescription>
+                  )}
+                </Field>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <FieldLabel>Hướng build phụ (Tùy chọn)</FieldLabel>
+              <div className="grid grid-cols-2 gap-4">
+                <Field>
+                  <Controller
+                    name="secondaryClass1"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value || "_none"}
+                        onValueChange={value =>
+                          field.onChange(value === "_none" ? undefined : value)
+                        }
+                        disabled={isLoading}
+                      >
+                        <SelectTrigger
+                          id="secondaryClass1"
+                          aria-invalid={!!errors.secondaryClass1}
+                        >
+                          <SelectValue placeholder="Chọn lớp (tùy chọn)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none">-</SelectItem>
+                          {classEnum.map(cls => (
+                            <SelectItem key={cls} value={cls}>
+                              {classDisplayNames[cls]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </Field>
+
+                <Field>
+                  <Controller
+                    name="secondaryClass2"
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        value={field.value || "_none"}
+                        onValueChange={value =>
+                          field.onChange(value === "_none" ? undefined : value)
+                        }
+                        disabled={isLoading}
+                      >
+                        <SelectTrigger
+                          id="secondaryClass2"
+                          aria-invalid={!!errors.secondaryClass2}
+                        >
+                          <SelectValue placeholder="Chọn hướng build (tùy chọn)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="_none">-</SelectItem>
+                          {classEnum.map(cls => (
+                            <SelectItem key={cls} value={cls}>
+                              {classDisplayNames[cls]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.secondaryClass2 && (
+                    <FieldDescription className="text-destructive">
+                      {errors.secondaryClass2.message}
+                    </FieldDescription>
+                  )}
+                </Field>
+              </div>
+            </div>
 
             <Field>
-              <FieldLabel htmlFor="role">Vai trò</FieldLabel>
+              <FieldLabel htmlFor="primaryRole">Vai trò chính</FieldLabel>
               <Controller
-                name="role"
+                name="primaryRole"
                 control={control}
                 render={({ field }) => (
                   <Select
@@ -143,7 +320,10 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
                     onValueChange={field.onChange}
                     disabled={isLoading}
                   >
-                    <SelectTrigger id="role" aria-invalid={!!errors.role}>
+                    <SelectTrigger
+                      id="primaryRole"
+                      aria-invalid={!!errors.primaryRole}
+                    >
                       <SelectValue placeholder="Chọn vai trò" />
                     </SelectTrigger>
                     <SelectContent>
@@ -154,9 +334,46 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
                   </Select>
                 )}
               />
-              {errors.role && (
+              {errors.primaryRole && (
                 <FieldDescription className="text-destructive">
-                  {errors.role.message}
+                  {errors.primaryRole.message}
+                </FieldDescription>
+              )}
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="secondaryRole">
+                Vai trò phụ (Tùy chọn)
+              </FieldLabel>
+              <Controller
+                name="secondaryRole"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value || "_none"}
+                    onValueChange={value =>
+                      field.onChange(value === "_none" ? undefined : value)
+                    }
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger
+                      id="secondaryRole"
+                      aria-invalid={!!errors.secondaryRole}
+                    >
+                      <SelectValue placeholder="Chọn vai trò (tùy chọn)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="_none">-</SelectItem>
+                      <SelectItem value="dps">DPS</SelectItem>
+                      <SelectItem value="healer">Healer</SelectItem>
+                      <SelectItem value="tank">Tank</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.secondaryRole && (
+                <FieldDescription className="text-destructive">
+                  {errors.secondaryRole.message}
                 </FieldDescription>
               )}
             </Field>
