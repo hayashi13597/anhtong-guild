@@ -22,7 +22,7 @@ const GuildWarPage = () => {
   }, [fetchEvent]);
 
   return (
-    <main className="max-w-7xl lg:max-w-4/5 mx-auto py-6 lg:py-20 px-4 space-y-6 lg:space-y-10">
+    <main className="max-w-7xl lg:max-w-4/5 min-h-screen mx-auto py-6 lg:py-20 px-4 space-y-6 lg:space-y-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center sm:text-left">
