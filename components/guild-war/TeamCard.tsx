@@ -28,7 +28,21 @@ import { Input } from "../ui/input";
 import { Separator } from "../ui/separator";
 import UserCard from "./UserCard";
 
-function TeamCard({ team, region }: { team: Team; region: "VN" | "NA" }) {
+function TeamCard({
+  team,
+  region,
+  isMobile,
+  selectedUserId,
+  onAssignUser,
+  onRemoveUser
+}: {
+  team: Team;
+  region: "VN" | "NA";
+  isMobile?: boolean;
+  selectedUserId?: string | null;
+  onAssignUser?: (teamId: string) => void;
+  onRemoveUser?: (userId: string, teamId: string) => void;
+}) {
   const renameTeam = useGuildWarStore(state => state.renameTeam);
   const deleteTeam = useGuildWarStore(state => state.deleteTeam);
 
@@ -46,7 +60,8 @@ function TeamCard({ team, region }: { team: Team; region: "VN" | "NA" }) {
     data: {
       type: "team",
       team
-    }
+    },
+    disabled: isMobile
   });
 
   const save = () => {
@@ -56,8 +71,20 @@ function TeamCard({ team, region }: { team: Team; region: "VN" | "NA" }) {
     setEditing(false);
   };
 
+  const handleAssignClick = () => {
+    if (isMobile && selectedUserId && onAssignUser) {
+      onAssignUser(team.id);
+    }
+  };
+
   return (
-    <Card className={cn("min-h-75", isOver && "ring-2 ring-primary")}>
+    <Card
+      className={cn(
+        "min-h-75",
+        isOver && "ring-2 ring-primary",
+        isMobile && selectedUserId && "ring-2 ring-primary/50"
+      )}
+    >
       <CardHeader className="space-y-2">
         <div className="flex items-center justify-between">
           {editing ? (
@@ -112,6 +139,16 @@ function TeamCard({ team, region }: { team: Team; region: "VN" | "NA" }) {
             }
           </Badge>
         </div>
+        {isMobile && selectedUserId && (
+          <Button
+            onClick={handleAssignClick}
+            size="sm"
+            className="w-full mt-2"
+            variant="outline"
+          >
+            Thêm vào nhóm này
+          </Button>
+        )}
       </CardHeader>
 
       <Separator />
@@ -128,7 +165,13 @@ function TeamCard({ team, region }: { team: Team; region: "VN" | "NA" }) {
               </div>
             ) : (
               team.members.map(user => (
-                <UserCard key={user.id} user={user} containerId={team.id} />
+                <UserCard
+                  key={user.id}
+                  user={user}
+                  containerId={team.id}
+                  isMobile={isMobile}
+                  onRemove={userId => onRemoveUser?.(userId, team.id)}
+                />
               ))
             )}
           </div>

@@ -18,19 +18,19 @@ interface TeamsViewProps {
 
 function TeamMemberRow({ member }: { member: TeamMember }) {
   return (
-    <div className="border rounded-lg shadow-sm bg-background flex items-center justify-between py-2 px-3">
-      <div className="flex-1">
-        <div className="font-medium text-sm">{member.name}</div>
-        <div className="text-xs text-muted-foreground">
+    <div className="border rounded-lg shadow-sm bg-background flex items-center justify-between py-2 px-2 sm:px-3">
+      <div className="flex-1 min-w-0">
+        <div className="font-medium text-sm truncate">{member.name}</div>
+        <div className="text-xs text-muted-foreground truncate">
           {formatClasses(member.primaryClass)}
         </div>
         {member.secondaryClass && (
-          <div className="text-xs text-muted-foreground/70">
+          <div className="text-xs text-muted-foreground/70 truncate">
             {formatClasses(member.secondaryClass)}
           </div>
         )}
       </div>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 shrink-0 ml-2">
         <Badge
           variant="outline"
           className={getColorForBadge(member.primaryRole)}
@@ -59,9 +59,9 @@ function TeamCard({ team }: { team: Team }) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{team.name}</CardTitle>
-        <div className="flex items-center gap-2 mt-2">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base sm:text-lg">{team.name}</CardTitle>
+        <div className="flex items-center flex-wrap gap-2 mt-2">
           <Badge className={getColorForBadge("DPS")}>DPS: {dpsCount}</Badge>
           <Badge className={getColorForBadge("Healer")}>
             Heal: {healerCount}
@@ -130,7 +130,7 @@ export function TeamsView({ region }: TeamsViewProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
       {teams.map(team => (
         <TeamCard key={team.id} team={team} />
       ))}

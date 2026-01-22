@@ -14,19 +14,19 @@ interface MembersListProps {
 
 function MemberRow({ member }: { member: TeamMember }) {
   return (
-    <div className="border rounded-lg shadow-sm bg-background flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50">
-      <div className="flex-1">
-        <div className="font-medium text-sm">{member.name}</div>
-        <div className="text-xs text-muted-foreground">
+    <div className="border rounded-lg shadow-sm bg-background flex items-center justify-between py-2 px-2 sm:px-3 rounded-lg hover:bg-muted/50">
+      <div className="flex-1 min-w-0">
+        <div className="font-medium text-sm truncate">{member.name}</div>
+        <div className="text-xs text-muted-foreground truncate">
           {formatClasses(member.primaryClass)}
         </div>
         {member.secondaryClass && (
-          <div className="text-xs text-muted-foreground/70">
+          <div className="text-xs text-muted-foreground/70 truncate">
             {formatClasses(member.secondaryClass)}
           </div>
         )}
       </div>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 shrink-0 ml-2">
         <Badge className={getColorForBadge(member.primaryRole)}>
           {member.primaryRole}
         </Badge>
@@ -90,8 +90,10 @@ export function MembersList({ region }: MembersListProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Thành viên đã đăng ký ({allMembers.length})</CardTitle>
-        <div className="flex items-center gap-2 mt-2">
+        <CardTitle className="text-base sm:text-lg">
+          Thành viên đã đăng ký ({allMembers.length})
+        </CardTitle>
+        <div className="flex items-center flex-wrap gap-2 mt-2">
           <Badge className={getColorForBadge("DPS")}>DPS: {dpsCount}</Badge>
           <Badge className={getColorForBadge("Healer")}>
             Healer: {healerCount}

@@ -22,10 +22,12 @@ const GuildWarPage = () => {
   }, [fetchEvent]);
 
   return (
-    <main className="max-w-4/5 mx-auto py-10 lg:py-20 px-4 space-y-10">
+    <main className="max-w-7xl lg:max-w-4/5 mx-auto py-6 lg:py-20 px-4 space-y-6 lg:space-y-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <h1 className="text-4xl font-bold text-center">Bang Chiến</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center sm:text-left">
+          Bang Chiến
+        </h1>
 
         {isAuthenticated ? (
           <div className="flex items-center gap-3">
@@ -50,7 +52,7 @@ const GuildWarPage = () => {
 
       {/* Region Tabs */}
       <Tabs defaultValue="VN">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center flex-col lg:flex-row gap-4">
           <TabsList className="grid w-full max-w-xs grid-cols-2">
             <TabsTrigger value="VN">VN Server</TabsTrigger>
             <TabsTrigger value="NA">NA Server</TabsTrigger>
@@ -86,17 +88,19 @@ const GuildWarPage = () => {
 
 function PublicView({ region }: { region: "VN" | "NA" }) {
   return (
-    <div className="space-y-8 pt-6 flex gap-5">
+    <div className="space-y-6 lg:space-y-8 pt-6 flex flex-col lg:flex-row gap-5">
       {/* Members Section */}
-      <section className="w-1/4">
-        <h2 className="text-2xl font-semibold mb-4">Danh sách đăng ký</h2>
-        <div className="max-w-md">
+      <section className="w-full lg:w-1/4">
+        <h2 className="text-xl lg:text-2xl font-semibold mb-4">
+          Danh sách đăng ký
+        </h2>
+        <div className="w-full lg:max-w-md">
           <MembersList region={region} />
         </div>
       </section>
       {/* Teams Section */}
       <section className="flex-1">
-        <h2 className="text-2xl font-semibold mb-4">Đội hình</h2>
+        <h2 className="text-xl lg:text-2xl font-semibold mb-4">Đội hình</h2>
         <TeamsView region={region} />
       </section>
     </div>

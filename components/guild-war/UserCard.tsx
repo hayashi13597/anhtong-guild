@@ -25,13 +25,21 @@ function UserCard({
   className,
   containerId,
   isAdmin,
-  onDelete
+  onDelete,
+  isMobile,
+  isSelected,
+  onSelect,
+  onRemove
 }: {
   user: TeamMember;
   className?: string;
   containerId: string;
   isAdmin?: boolean;
   onDelete?: (userId: string) => void;
+  isMobile?: boolean;
+  isSelected?: boolean;
+  onSelect?: (userId: string) => void;
+  onRemove?: (userId: string) => void;
 }) {
   const {
     attributes,
@@ -46,7 +54,8 @@ function UserCard({
       type: "user",
       user,
       containerId
-    }
+    },
+    disabled: isMobile
   });
 
   const style = {
@@ -56,12 +65,20 @@ function UserCard({
   };
 
   const canDelete = isAdmin && containerId === "available" && onDelete;
+  const canRemove = isMobile && containerId !== "available" && onRemove;
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     setShowDeleteDialog(true);
+  };
+
+  const handleRemoveClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onRemove) {
+      onRemove(user.id);
+    }
   };
 
   const handleConfirmDelete = () => {
@@ -71,21 +88,33 @@ function UserCard({
     setShowDeleteDialog(false);
   };
 
+  const handleClick = () => {
+    if (isMobile && onSelect) {
+      onSelect(user.id);
+    }
+  };
+
   return (
     <>
       <div
         ref={setNodeRef}
         style={style}
         className={cn(
-          "p-3 border rounded-lg shadow-sm bg-background cursor-grab active:cursor-grabbing",
+          "p-3 border rounded-lg shadow-sm bg-background",
+          !isMobile && "cursor-grab active:cursor-grabbing",
+          isMobile && "cursor-pointer",
           isDragging && "z-50 shadow-lg",
+          isSelected && "bg-primary/10 border-primary",
           className
         )}
-        {...attributes}
-        {...listeners}
+        onClick={handleClick}
+        {...(!isMobile ? attributes : {})}
+        {...(!isMobile ? listeners : {})}
       >
         <div className="flex items-center gap-2">
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
+          {!isMobile && (
+            <GripVertical className="w-4 h-4 text-muted-foreground" />
+          )}
           <div className="flex-1 space-y-1">
             <div className="font-medium text-sm">{user.name}</div>
             <div className="text-xs text-muted-foreground">
@@ -119,6 +148,16 @@ function UserCard({
               onPointerDown={e => e.stopPropagation()}
             >
               <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+          {canRemove && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs text-muted-foreground hover:text-destructive"
+              onClick={handleRemoveClick}
+            >
+              Xóa
             </Button>
           )}
         </div>

@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { getColorForBadge } from "@/lib/color";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
@@ -67,9 +68,11 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
 
   const user = useAuthStore(state => state.user);
   const isAdmin = user?.isAdmin ?? false;
+  const isMobile = useIsMobile();
 
   const [activeUser, setActiveUser] = useState<TeamMember | null>(null);
   const [overContainerId, setOverContainerId] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   // Fetch data on mount
   useEffect(() => {
@@ -86,6 +89,25 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
       await deleteUser(region, userId);
     } catch (error) {
       console.error("Failed to delete user:", error);
+    }
+  };
+
+  const handleSelectUser = (userId: string) => {
+    if (isMobile) {
+      setSelectedUserId(prev => (prev === userId ? null : userId));
+    }
+  };
+
+  const handleAssignToTeam = (teamId: string) => {
+    if (isMobile && selectedUserId) {
+      moveUser(region, selectedUserId, "available", teamId);
+      setSelectedUserId(null);
+    }
+  };
+
+  const handleRemoveFromTeam = (userId: string, teamId: string) => {
+    if (isMobile) {
+      moveUser(region, userId, teamId, "available");
     }
   };
 
@@ -225,13 +247,15 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 p-3 sm:p-6">
         {/* Available Users */}
         <div className="lg:col-span-1">
           <Card>
-            <CardHeader>
-              <CardTitle>Thành viên đã đăng ký</CardTitle>
-              <div className="flex items-center gap-2 mt-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base sm:text-lg">
+                Thành viên đã đăng ký
+              </CardTitle>
+              <div className="flex items-center flex-wrap gap-2 mt-2">
                 <Badge className={getColorForBadge("DPS")}>
                   DPS: {dpsCount}
                 </Badge>
@@ -266,6 +290,9 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                         containerId="available"
                         isAdmin={isAdmin}
                         onDelete={handleDeleteUser}
+                        isMobile={isMobile}
+                        isSelected={selectedUserId === user.id}
+                        onSelect={handleSelectUser}
                       />
                     ))
                   )}
@@ -277,18 +304,34 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
 
         {/* Teams */}
         <div className="lg:col-span-3">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Teams</h2>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
+            <div className="flex-1">
+              <h2 className="text-lg sm:text-xl font-semibold">Teams</h2>
+              {isMobile && selectedUserId && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Chọn nhóm để thêm thành viên
+                </p>
+              )}
+            </div>
             <Button onClick={() => addTeam(region)} size="sm">
               <Plus className="w-4 h-4 mr-2" />
-              Nhóm mới
+              <span className="hidden sm:inline">Nhóm mới</span>
+              <span className="sm:hidden">Mới</span>
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             {teams.length > 0 ? (
               teams.map(team => (
-                <TeamCard key={team.id} team={team} region={region} />
+                <TeamCard
+                  key={team.id}
+                  team={team}
+                  region={region}
+                  isMobile={isMobile}
+                  selectedUserId={selectedUserId}
+                  onAssignUser={handleAssignToTeam}
+                  onRemoveUser={handleRemoveFromTeam}
+                />
               ))
             ) : (
               <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground col-span-full">
