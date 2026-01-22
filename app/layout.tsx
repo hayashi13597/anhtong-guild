@@ -1,6 +1,7 @@
 import BackToTop from "@/components/BackToTop";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/contexts/ThemeProvider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
@@ -43,6 +44,7 @@ export default function RootLayout({
           <div className="pt-20 lg:pt-10">{children}</div>
           <Footer />
           <BackToTop />
+          <Toaster richColors position="top-right" />
         </ThemeProvider>
       </body>
     </html>

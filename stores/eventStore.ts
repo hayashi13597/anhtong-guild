@@ -5,8 +5,10 @@ import {
   type Team as ApiTeam,
   type ClassType,
   type GuildEvent,
+  type TimeSlot,
   type User
 } from "@/lib/api";
+import { toast } from "sonner";
 import { create } from "zustand";
 
 export interface TeamMember {
@@ -17,6 +19,8 @@ export interface TeamMember {
   primaryRole: "DPS" | "Healer" | "Tank";
   secondaryRole: "DPS" | "Healer" | "Tank" | null;
   region: "VN" | "NA";
+  timeSlots: TimeSlot[];
+  notes: string | null;
   apiId: number; // Original backend ID
 }
 
@@ -24,6 +28,7 @@ export interface Team {
   id: string;
   apiId: number; // Original backend ID
   name: string;
+  day: "saturday" | "sunday";
   members: TeamMember[];
 }
 
@@ -50,7 +55,12 @@ interface GuildWarStore {
   invalidateCache: (region: RegionKey) => void;
 
   // Admin actions
-  addTeam: (region: RegionKey, name?: string) => Promise<void>;
+  addTeam: (
+    region: RegionKey,
+    name?: string,
+    day?: "saturday" | "sunday",
+    description?: string
+  ) => Promise<void>;
   renameTeam: (
     region: RegionKey,
     teamId: string,
@@ -83,6 +93,8 @@ interface GuildWarStore {
     secondaryClass?: [ClassType, ClassType];
     primaryRole: "dps" | "healer" | "tank";
     secondaryRole?: "dps" | "healer" | "tank";
+    timeSlots: TimeSlot[];
+    notes?: string;
   }) => Promise<void>;
 }
 
@@ -102,7 +114,10 @@ function convertRegion(region: string): "VN" | "NA" {
   return region.toUpperCase() as "VN" | "NA";
 }
 
-function userToMember(user: User): TeamMember {
+function userToMember(
+  user: User,
+  signup?: { timeSlots: TimeSlot[]; notes: string | null }
+): TeamMember {
   // primaryRole is required, so we use a default if somehow null
   const primaryRole = convertApiRole(user.primaryRole) || "DPS";
 
@@ -114,16 +129,24 @@ function userToMember(user: User): TeamMember {
     secondaryClass: user.secondaryClass || null,
     primaryRole,
     secondaryRole: convertApiRole(user.secondaryRole),
-    region: convertRegion(user.region)
+    region: convertRegion(user.region),
+    timeSlots: signup?.timeSlots || [],
+    notes: signup?.notes || null
   };
 }
 
-function apiTeamToTeam(apiTeam: ApiTeam): Team {
+function apiTeamToTeam(
+  apiTeam: ApiTeam,
+  signupsMap: Map<number, { timeSlots: TimeSlot[]; notes: string | null }>
+): Team {
   return {
     id: `team-${apiTeam.id}`,
     apiId: apiTeam.id,
     name: apiTeam.name,
-    members: (apiTeam.members ?? []).map(m => userToMember(m.user))
+    day: apiTeam.day,
+    members: (apiTeam.members ?? []).map(m =>
+      userToMember(m.user, signupsMap.get(m.user.id))
+    )
   };
 }
 
@@ -175,23 +198,27 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
       const apiRegion = region.toLowerCase() as "vn" | "na";
       const event = await api.getCurrentEvent(apiRegion);
 
-      // Get all signed-up users
+      // Create a map of userId to signup info for quick lookup
+      const signupsMap = new Map(
+        event.signups.map(signup => [
+          signup.user.id,
+          { timeSlots: signup.timeSlots, notes: signup.notes }
+        ])
+      );
+
+      // Get all signed-up users with their signup info
       const signedUpUsers = event.signups.map(signup =>
-        userToMember(signup.user)
+        userToMember(signup.user, {
+          timeSlots: signup.timeSlots,
+          notes: signup.notes
+        })
       );
 
-      // Get users who are already in teams
-      const assignedUserIds = new Set<string>();
-      const teams = event.teams.map(team => {
-        const converted = apiTeamToTeam(team);
-        converted.members.forEach(m => assignedUserIds.add(m.id));
-        return converted;
-      });
+      // Convert teams with signup info
+      const teams = event.teams.map(team => apiTeamToTeam(team, signupsMap));
 
-      // Available users = signed up but not in any team
-      const availableUsers = signedUpUsers.filter(
-        u => !assignedUserIds.has(u.id)
-      );
+      // Keep ALL signed up users as available - the UI will filter based on day
+      const availableUsers = signedUpUsers;
 
       set({
         [region]: {
@@ -214,19 +241,38 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
     }
   },
 
-  addTeam: async (region: RegionKey, name?: string) => {
+  addTeam: async (
+    region: RegionKey,
+    name?: string,
+    day?: "saturday" | "sunday",
+    description?: string
+  ) => {
     const state = get();
     const event = state[region].event;
     if (!event) return;
 
     try {
       const teamName = name || `Team ${state[region].teams.length + 1}`;
-      const newTeam = await api.createTeam(event.id, teamName);
+      const teamDay = day || "saturday";
+      const newTeam = await api.createTeam(
+        event.id,
+        teamName,
+        teamDay,
+        description
+      );
+
+      // Create signups map from current availableUsers
+      const signupsMap = new Map(
+        state[region].availableUsers.map(u => [
+          u.apiId,
+          { timeSlots: u.timeSlots, notes: u.notes }
+        ])
+      );
 
       set(state => ({
         [region]: {
           ...state[region],
-          teams: [...state[region].teams, apiTeamToTeam(newTeam)],
+          teams: [...state[region].teams, apiTeamToTeam(newTeam, signupsMap)],
           lastFetched: null // Invalidate cache
         }
       }));
@@ -267,14 +313,11 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
     try {
       await api.deleteTeam(team.apiId);
 
-      // Move members back to available
-      const membersToMove = team.members;
-
+      // Don't move members - they're always in availableUsers
       set(state => ({
         [region]: {
           ...state[region],
           teams: state[region].teams.filter(t => t.id !== teamId),
-          availableUsers: [...state[region].availableUsers, ...membersToMove],
           lastFetched: null // Invalidate cache
         }
       }));
@@ -303,9 +346,7 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
       set(state => ({
         [region]: {
           ...state[region],
-          availableUsers: state[region].availableUsers.filter(
-            u => u.id !== userId
-          ),
+          // Don't remove from availableUsers - users can be in multiple day teams
           teams: state[region].teams.map(t =>
             t.id === teamId ? { ...t, members: [...t.members, user] } : t
           ),
@@ -335,7 +376,7 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
       set(state => ({
         [region]: {
           ...state[region],
-          availableUsers: [...state[region].availableUsers, user],
+          // Don't add to availableUsers - they're always there
           teams: state[region].teams.map(t =>
             t.id === teamId
               ? { ...t, members: t.members.filter(m => m.id !== userId) }
@@ -401,13 +442,10 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
 
     // Update local state
     set(state => {
-      let newAvailable = [...state[region].availableUsers];
       let newTeams = [...state[region].teams];
 
-      // Remove from source
-      if (fromContainer === "available") {
-        newAvailable = newAvailable.filter(u => u.id !== userId);
-      } else {
+      // Remove from source team (if moving from a team)
+      if (fromContainer !== "available") {
         newTeams = newTeams.map(t =>
           t.id === fromContainer
             ? { ...t, members: t.members.filter(m => m.id !== userId) }
@@ -415,10 +453,8 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
         );
       }
 
-      // Add to destination
-      if (toContainer === "available") {
-        newAvailable.push(user!);
-      } else {
+      // Add to destination team (if moving to a team)
+      if (toContainer !== "available") {
         newTeams = newTeams.map(t =>
           t.id === toContainer ? { ...t, members: [...t.members, user!] } : t
         );
@@ -427,7 +463,7 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
       return {
         [region]: {
           ...state[region],
-          availableUsers: newAvailable,
+          // availableUsers stays the same - always contains all signed up users
           teams: newTeams,
           lastFetched: null // Invalidate cache
         }
@@ -441,7 +477,7 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
 
     // Only allow deletion if user is in available list (not in a team)
     if (!user) {
-      console.error("User not found or already assigned to a team");
+      toast.warning("User not found or already assigned to a team");
       return;
     }
 

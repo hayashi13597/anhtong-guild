@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
   FieldDescription,
@@ -22,6 +23,8 @@ import {
   SelectValue
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
+import { type TimeSlot } from "@/lib/api";
 import { classDisplayNames, classEnum, type ClassType } from "@/lib/classes";
 import { useGuildWarStore } from "@/stores/eventStore";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -40,7 +43,31 @@ const signupSchema = z
       message: "Vai trò chính là bắt buộc"
     }),
     secondaryRole: z.enum(["dps", "healer", "tank"]).optional(),
-    region: z.enum(["vn", "na"], { message: "Server là bắt buộc" })
+    region: z.enum(["vn", "na"], { message: "Server là bắt buộc" }),
+    timeSlots: z
+      .array(z.string())
+      .min(1, "Phải chọn ít nhất 1 khung giờ")
+      .refine(
+        slots =>
+          slots.every(slot =>
+            [
+              "sat_19:30-20:00",
+              "sat_20:00-20:30",
+              "sat_20:30-21:00",
+              "sat_21:00-21:30",
+              "sat_21:30-22:00",
+              "sat_22:00-22:30",
+              "sun_19:30-20:00",
+              "sun_20:00-20:30",
+              "sun_20:30-21:00",
+              "sun_21:00-21:30",
+              "sun_21:30-22:00",
+              "sun_22:00-22:30"
+            ].includes(slot)
+          ),
+        { message: "Khung giờ không hợp lệ" }
+      ),
+    notes: z.string().optional()
   })
   .refine(data => data.primaryClass1 !== data.primaryClass2, {
     message: "Hai lớp chính không được trùng nhau",
@@ -91,7 +118,9 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
     secondaryClass2: undefined,
     primaryRole: "dps",
     secondaryRole: undefined,
-    region: defaultRegion ?? "vn"
+    region: defaultRegion ?? "vn",
+    timeSlots: [],
+    notes: ""
   };
 
   const {
@@ -125,7 +154,9 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
         primaryClass,
         secondaryClass,
         primaryRole: data.primaryRole,
-        secondaryRole: data.secondaryRole
+        secondaryRole: data.secondaryRole,
+        timeSlots: data.timeSlots as TimeSlot[],
+        notes: data.notes
       });
       setSuccess("Đăng ký thành công!");
       reset(defaultValues);
@@ -404,6 +435,119 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
                   {errors.region.message}
                 </FieldDescription>
               )}
+            </Field>
+
+            <Field>
+              <FieldLabel>Khung giờ tham gia *</FieldLabel>
+              <FieldDescription>
+                Chọn các khung giờ bạn có thể tham gia
+              </FieldDescription>
+              <Controller
+                name="timeSlots"
+                control={control}
+                render={({ field }) => (
+                  <div className="space-y-3 mt-2">
+                    <div>
+                      <div className="font-medium text-sm mb-2">Thứ 7</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          "sat_19:30-20:00",
+                          "sat_20:00-20:30",
+                          "sat_20:30-21:00",
+                          "sat_21:00-21:30",
+                          "sat_21:30-22:00",
+                          "sat_22:00-22:30"
+                        ].map(slot => (
+                          <div
+                            key={slot}
+                            className="flex items-center space-x-2"
+                          >
+                            <Checkbox
+                              id={slot}
+                              checked={field.value.includes(slot)}
+                              onCheckedChange={checked => {
+                                const newValue = checked
+                                  ? [...field.value, slot]
+                                  : field.value.filter(s => s !== slot);
+                                field.onChange(newValue);
+                              }}
+                              disabled={isLoading}
+                            />
+                            <label
+                              htmlFor={slot}
+                              className="text-sm cursor-pointer"
+                            >
+                              {slot.split("_")[1]}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="font-medium text-sm mb-2">Chủ nhật</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          "sun_19:30-20:00",
+                          "sun_20:00-20:30",
+                          "sun_20:30-21:00",
+                          "sun_21:00-21:30",
+                          "sun_21:30-22:00",
+                          "sun_22:00-22:30"
+                        ].map(slot => (
+                          <div
+                            key={slot}
+                            className="flex items-center space-x-2"
+                          >
+                            <Checkbox
+                              id={slot}
+                              checked={field.value.includes(slot)}
+                              onCheckedChange={checked => {
+                                const newValue = checked
+                                  ? [...field.value, slot]
+                                  : field.value.filter(s => s !== slot);
+                                field.onChange(newValue);
+                              }}
+                              disabled={isLoading}
+                            />
+                            <label
+                              htmlFor={slot}
+                              className="text-sm cursor-pointer"
+                            >
+                              {slot.split("_")[1]}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              />
+              {errors.timeSlots && (
+                <FieldDescription className="text-destructive">
+                  {errors.timeSlots.message}
+                </FieldDescription>
+              )}
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="notes">Ghi chú (Tùy chọn)</FieldLabel>
+              <FieldDescription>
+                Thêm ghi chú về lịch trình hoặc yêu cầu đặc biệt
+              </FieldDescription>
+              <Controller
+                name="notes"
+                control={control}
+                render={({ field }) => (
+                  <Textarea
+                    id="notes"
+                    placeholder="Nhập ghi chú của bạn..."
+                    disabled={isLoading}
+                    rows={3}
+                    {...field}
+                  />
+                )}
+              />
             </Field>
 
             {error && (

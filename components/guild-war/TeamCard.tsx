@@ -155,7 +155,7 @@ function TeamCard({
 
       <CardContent ref={setNodeRef}>
         <SortableContext
-          items={team.members.map(m => m.id)}
+          items={team.members.map(m => `${team.id}-${m.id}`)}
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-2 min-h-20">

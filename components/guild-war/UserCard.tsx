@@ -38,9 +38,12 @@ function UserCard({
   onDelete?: (userId: string) => void;
   isMobile?: boolean;
   isSelected?: boolean;
-  onSelect?: (userId: string) => void;
+  onSelect?: (userId: string, containerId: string) => void;
   onRemove?: (userId: string) => void;
 }) {
+  // Create unique ID combining user ID and container to allow same user in multiple lists
+  const uniqueId = `${containerId}-${user.id}`;
+
   const {
     attributes,
     listeners,
@@ -49,7 +52,7 @@ function UserCard({
     transition,
     isDragging
   } = useSortable({
-    id: user.id,
+    id: uniqueId,
     data: {
       type: "user",
       user,
@@ -90,7 +93,7 @@ function UserCard({
 
   const handleClick = () => {
     if (isMobile && onSelect) {
-      onSelect(user.id);
+      onSelect(user.id, containerId);
     }
   };
 
@@ -123,6 +126,11 @@ function UserCard({
             {user.secondaryClass && (
               <div className="text-xs text-muted-foreground/70">
                 {formatClasses(user.secondaryClass)}
+              </div>
+            )}
+            {user.timeSlots && user.timeSlots.length > 0 && (
+              <div className="text-xs text-muted-foreground/60 pt-1">
+                {user.timeSlots.map(slot => slot.split("_")[1]).join(", ")}
               </div>
             )}
           </div>

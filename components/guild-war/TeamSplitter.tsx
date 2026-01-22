@@ -21,26 +21,47 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { getColorForBadge } from "@/lib/color";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
 import { useGuildWarStore, type TeamMember } from "@/stores/eventStore";
+import { toast } from "sonner";
 import { Badge } from "../ui/badge";
 import TeamCard from "./TeamCard";
 import UserCard from "./UserCard";
 
 function AvailableUsersDroppable({
   children,
-  isOver
+  isOver,
+  droppableId
 }: {
   children: React.ReactNode;
   isOver: boolean;
+  droppableId: string;
 }) {
   const { setNodeRef } = useDroppable({
-    id: "available",
+    id: droppableId,
     data: { type: "container" }
   });
 
@@ -73,6 +94,41 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
   const [activeUser, setActiveUser] = useState<TeamMember | null>(null);
   const [overContainerId, setOverContainerId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserSource, setSelectedUserSource] = useState<string | null>(
+    null
+  );
+  const [showTeamDialog, setShowTeamDialog] = useState(false);
+  const [teamFormData, setTeamFormData] = useState({
+    name: "",
+    day: "saturday" as "saturday" | "sunday",
+    description: ""
+  });
+
+  // Separate teams by day first
+  const saturdayTeams = teams.filter(t => t.day === "saturday");
+  const sundayTeams = teams.filter(t => t.day === "sunday");
+
+  // Find which users are already in teams for each day
+  const usersInSaturdayTeams = new Set(
+    saturdayTeams.flatMap(t => t.members.map(m => m.id))
+  );
+  const usersInSundayTeams = new Set(
+    sundayTeams.flatMap(t => t.members.map(m => m.id))
+  );
+
+  // Saturday users: have Saturday slots AND not in a Saturday team
+  const saturdayUsers = availableUsers.filter(
+    u =>
+      u.timeSlots.some(slot => slot.startsWith("sat_")) &&
+      !usersInSaturdayTeams.has(u.id)
+  );
+
+  // Sunday users: have Sunday slots AND not in a Sunday team
+  const sundayUsers = availableUsers.filter(
+    u =>
+      u.timeSlots.some(slot => slot.startsWith("sun_")) &&
+      !usersInSundayTeams.has(u.id)
+  );
 
   // Fetch data on mount
   useEffect(() => {
@@ -81,6 +137,25 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
 
   const handleRefresh = async () => {
     await fetchEvent(region);
+  };
+
+  const handleCreateTeam = async () => {
+    if (!teamFormData.name.trim()) {
+      return;
+    }
+
+    try {
+      await addTeam(
+        region,
+        teamFormData.name,
+        teamFormData.day,
+        teamFormData.description || undefined
+      );
+      setShowTeamDialog(false);
+      setTeamFormData({ name: "", day: "saturday", description: "" });
+    } catch (error) {
+      console.error("Failed to create team:", error);
+    }
   };
 
   const handleDeleteUser = async (userId: string) => {
@@ -92,16 +167,79 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
     }
   };
 
-  const handleSelectUser = (userId: string) => {
+  const handleSelectUser = (userId: string, sourceContainer: string) => {
     if (isMobile) {
-      setSelectedUserId(prev => (prev === userId ? null : userId));
+      if (selectedUserId === userId) {
+        // Deselect if clicking the same user
+        setSelectedUserId(null);
+        setSelectedUserSource(null);
+      } else {
+        setSelectedUserId(userId);
+        setSelectedUserSource(sourceContainer);
+      }
     }
   };
 
   const handleAssignToTeam = (teamId: string) => {
-    if (isMobile && selectedUserId) {
-      moveUser(region, selectedUserId, "available", teamId);
+    if (isMobile && selectedUserId && selectedUserSource) {
+      // Find the target team
+      const targetTeam = teams.find(t => t.id === teamId);
+      if (!targetTeam) return;
+
+      // Find the user
+      const user = availableUsers.find(u => u.id === selectedUserId);
+      if (!user) return;
+
+      // Validate day compatibility
+      const targetDay = targetTeam.day;
+      const hasSatSlots = user.timeSlots.some(slot => slot.startsWith("sat_"));
+      const hasSunSlots = user.timeSlots.some(slot => slot.startsWith("sun_"));
+
+      // Check if user has time slots for the target day
+      if (targetDay === "saturday" && !hasSatSlots) {
+        toast.warning("User doesn't have Saturday time slots");
+        return;
+      }
+      if (targetDay === "sunday" && !hasSunSlots) {
+        toast.warning("User doesn't have Sunday time slots");
+        return;
+      }
+
+      // Check if user is already in another team for the target day
+      if (targetDay === "saturday") {
+        const isInOtherSaturdayTeam = saturdayTeams.some(
+          team =>
+            team.id !== selectedUserSource &&
+            team.members.some(m => m.id === selectedUserId)
+        );
+        if (isInOtherSaturdayTeam) {
+          toast.error("User is already in another Saturday team");
+          return;
+        }
+      }
+
+      if (targetDay === "sunday") {
+        const isInOtherSundayTeam = sundayTeams.some(
+          team =>
+            team.id !== selectedUserSource &&
+            team.members.some(m => m.id === selectedUserId)
+        );
+        if (isInOtherSundayTeam) {
+          alert("User is already in another Sunday team");
+          return;
+        }
+      }
+
+      // Map source container for the move
+      const fromContainerId =
+        selectedUserSource === "available-saturday" ||
+        selectedUserSource === "available-sunday"
+          ? "available"
+          : selectedUserSource;
+
+      moveUser(region, selectedUserId, fromContainerId, teamId);
       setSelectedUserId(null);
+      setSelectedUserSource(null);
     }
   };
 
@@ -120,20 +258,39 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
   );
 
   const findContainer = (id: string): string | null => {
-    // Check if it's in available users
-    if (availableUsers.find(u => u.id === id)) {
-      return "available";
+    // Extract actual user ID from composite ID
+    const extractUserId = (compositeId: string) => {
+      // Format: "containerId-userId" where userId starts with "user-"
+      const match = compositeId.match(/-(user-.+)$/);
+      return match ? match[1] : compositeId;
+    };
+
+    // Check if it's in available users (Saturday)
+    if (id.startsWith("available-saturday-")) {
+      const userId = extractUserId(id);
+      if (saturdayUsers.find(u => u.id === userId)) {
+        return "available-saturday";
+      }
     }
 
-    // Check in teams
+    // Check if it's in available users (Sunday)
+    if (id.startsWith("available-sunday-")) {
+      const userId = extractUserId(id);
+      if (sundayUsers.find(u => u.id === userId)) {
+        return "available-sunday";
+      }
+    }
+
+    // Check in teams (team members don't have composite IDs)
+    const userId = extractUserId(id);
     for (const team of teams) {
-      if (team.members.find(m => m.id === id)) {
+      if (team.members.find(m => m.id === userId)) {
         return team.id;
       }
     }
 
     // Check if it's a container itself
-    if (id === "available") return "available";
+    if (id === "available-saturday" || id === "available-sunday") return id;
     if (teams.find(t => t.id === id)) return id;
 
     return null;
@@ -169,11 +326,22 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
     const activeId = active.id as string;
     const overId = over.id as string;
 
+    // Extract actual user ID from composite ID
+    const extractUserId = (id: string) => {
+      const match = id.match(/-(user-.+)$/);
+      return match ? match[1] : id;
+    };
+    const actualUserId = extractUserId(activeId);
+
     const activeContainer = active.data.current?.containerId as string;
     let overContainer = findContainer(overId);
 
     // If dropping on a container directly (empty area)
-    if (overId === "available" || teams.find(t => t.id === overId)) {
+    if (
+      overId === "available-saturday" ||
+      overId === "available-sunday" ||
+      teams.find(t => t.id === overId)
+    ) {
       overContainer = overId;
     }
 
@@ -181,15 +349,96 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
 
     // Only move if containers are different (no reordering within container)
     if (activeContainer !== overContainer) {
-      moveUser(region, activeId, activeContainer, overContainer);
+      // Validate day compatibility
+      const user = activeUser;
+      if (!user) return;
+
+      // Determine if destination is Saturday or Sunday
+      const toSaturday =
+        overContainer === "available-saturday" ||
+        teams.find(t => t.id === overContainer && t.day === "saturday");
+      const toSunday =
+        overContainer === "available-sunday" ||
+        teams.find(t => t.id === overContainer && t.day === "sunday");
+
+      // Validate based on user's time slots
+      const hasSatSlots = user.timeSlots.some(slot => slot.startsWith("sat_"));
+      const hasSunSlots = user.timeSlots.some(slot => slot.startsWith("sun_"));
+
+      // Allow moving to available lists (removing from teams)
+      const movingToAvailable =
+        overContainer === "available-saturday" ||
+        overContainer === "available-sunday";
+
+      if (!movingToAvailable) {
+        // Only validate when moving to teams, not when removing from teams
+        // Prevent moving Saturday-only users to Sunday teams
+        if (toSunday && !hasSunSlots) {
+          toast.warning("User doesn't have Sunday time slots");
+          return;
+        }
+
+        // Prevent moving Sunday-only users to Saturday teams
+        if (toSaturday && !hasSatSlots) {
+          toast.warning("User doesn't have Saturday time slots");
+          return;
+        }
+
+        // Check if user is already in a different team for the target day
+        if (toSaturday) {
+          const isInSaturdayTeam = saturdayTeams.some(
+            team =>
+              team.id !== activeContainer && // Exclude source team
+              team.members.some(m => m.id === actualUserId)
+          );
+          if (isInSaturdayTeam) {
+            toast.error("User is already in another Saturday team");
+            return;
+          }
+        }
+
+        if (toSunday) {
+          const isInSundayTeam = sundayTeams.some(
+            team =>
+              team.id !== activeContainer && // Exclude source team
+              team.members.some(m => m.id === actualUserId)
+          );
+          if (isInSundayTeam) {
+            toast.warning("User is already in another Sunday team");
+            return;
+          }
+        }
+      }
+
+      // Map container IDs for the move
+      const fromContainerId =
+        activeContainer === "available-saturday" ||
+        activeContainer === "available-sunday"
+          ? "available"
+          : activeContainer;
+      const toContainerId =
+        overContainer === "available-saturday" ||
+        overContainer === "available-sunday"
+          ? "available"
+          : overContainer;
+
+      moveUser(region, actualUserId, fromContainerId, toContainerId);
     }
   };
 
-  const dpsCount = availableUsers.filter(m => m.primaryRole === "DPS").length;
-  const healerCount = availableUsers.filter(
+  const satDpsCount = saturdayUsers.filter(m => m.primaryRole === "DPS").length;
+  const satHealerCount = saturdayUsers.filter(
     m => m.primaryRole === "Healer"
   ).length;
-  const tankCount = availableUsers.filter(m => m.primaryRole === "Tank").length;
+  const satTankCount = saturdayUsers.filter(
+    m => m.primaryRole === "Tank"
+  ).length;
+
+  const sunDpsCount = sundayUsers.filter(m => m.primaryRole === "DPS").length;
+  const sunHealerCount = sundayUsers.filter(
+    m => m.primaryRole === "Healer"
+  ).length;
+  const sunTankCount = sundayUsers.filter(m => m.primaryRole === "Tank").length;
 
   if (isLoading) {
     return (
@@ -247,97 +496,190 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 p-3 sm:p-6">
-        {/* Available Users */}
-        <div className="lg:col-span-1">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base sm:text-lg">
-                Thành viên đã đăng ký
-              </CardTitle>
-              <div className="flex items-center flex-wrap gap-2 mt-2">
-                <Badge className={getColorForBadge("DPS")}>
-                  DPS: {dpsCount}
-                </Badge>
-                <Badge className={getColorForBadge("Healer")}>
-                  Healer: {healerCount}
-                </Badge>
-                <Badge className={getColorForBadge("Tank")}>
-                  Tank: {tankCount}
-                </Badge>
+      <div className="space-y-6 p-3 sm:p-6">
+        {/* Saturday Section */}
+        <div>
+          <h2 className="text-xl font-bold mb-4">Thứ 7 (Saturday)</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+            {/* Available Users - Saturday */}
+            <div className="lg:col-span-1">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base sm:text-lg">
+                    Thành viên đã đăng ký
+                  </CardTitle>
+                  <div className="flex items-center flex-wrap gap-2 mt-2">
+                    <Badge className={getColorForBadge("DPS")}>
+                      DPS: {satDpsCount}
+                    </Badge>
+                    <Badge className={getColorForBadge("Healer")}>
+                      Healer: {satHealerCount}
+                    </Badge>
+                    <Badge className={getColorForBadge("Tank")}>
+                      Tank: {satTankCount}
+                    </Badge>
+                  </div>
+                </CardHeader>
+
+                <Separator />
+
+                <CardContent className="px-4">
+                  <SortableContext
+                    items={saturdayUsers.map(u => `available-saturday-${u.id}`)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <AvailableUsersDroppable
+                      droppableId="available-saturday"
+                      isOver={overContainerId === "available-saturday"}
+                    >
+                      {saturdayUsers.length === 0 ? (
+                        <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
+                          Không có thành viên nào
+                        </div>
+                      ) : (
+                        saturdayUsers.map(user => (
+                          <UserCard
+                            key={user.id}
+                            user={user}
+                            containerId="available-saturday"
+                            isAdmin={isAdmin}
+                            onDelete={handleDeleteUser}
+                            isMobile={isMobile}
+                            isSelected={selectedUserId === user.id}
+                            onSelect={handleSelectUser}
+                          />
+                        ))
+                      )}
+                    </AvailableUsersDroppable>
+                  </SortableContext>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Teams - Saturday */}
+            <div className="lg:col-span-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
+                <h3 className="text-lg font-semibold">Teams</h3>
+                <Button onClick={() => setShowTeamDialog(true)} size="sm">
+                  <Plus className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Nhóm mới</span>
+                  <span className="sm:hidden">Mới</span>
+                </Button>
               </div>
-            </CardHeader>
 
-            <Separator />
-
-            <CardContent className="px-4">
-              <SortableContext
-                items={availableUsers.map(u => u.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <AvailableUsersDroppable
-                  isOver={overContainerId === "available"}
-                >
-                  {availableUsers.length === 0 ? (
-                    <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
-                      Không có thành viên nào
-                    </div>
-                  ) : (
-                    availableUsers.map(user => (
-                      <UserCard
-                        key={user.id}
-                        user={user}
-                        containerId="available"
-                        isAdmin={isAdmin}
-                        onDelete={handleDeleteUser}
-                        isMobile={isMobile}
-                        isSelected={selectedUserId === user.id}
-                        onSelect={handleSelectUser}
-                      />
-                    ))
-                  )}
-                </AvailableUsersDroppable>
-              </SortableContext>
-            </CardContent>
-          </Card>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+                {saturdayTeams.length > 0 ? (
+                  saturdayTeams.map(team => (
+                    <TeamCard
+                      key={team.id}
+                      team={team}
+                      region={region}
+                      isMobile={isMobile}
+                      selectedUserId={selectedUserId}
+                      onAssignUser={handleAssignToTeam}
+                      onRemoveUser={handleRemoveFromTeam}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground col-span-full">
+                    Chưa có nhóm nào được tạo
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Teams */}
-        <div className="lg:col-span-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
-            <div className="flex-1">
-              <h2 className="text-lg sm:text-xl font-semibold">Teams</h2>
-              {isMobile && selectedUserId && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  Chọn nhóm để thêm thành viên
-                </p>
-              )}
-            </div>
-            <Button onClick={() => addTeam(region)} size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Nhóm mới</span>
-              <span className="sm:hidden">Mới</span>
-            </Button>
-          </div>
+        {/* Sunday Section */}
+        <div>
+          <h2 className="text-xl font-bold mb-4">Chủ nhật (Sunday)</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
+            {/* Available Users - Sunday */}
+            <div className="lg:col-span-1">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base sm:text-lg">
+                    Thành viên đã đăng ký
+                  </CardTitle>
+                  <div className="flex items-center flex-wrap gap-2 mt-2">
+                    <Badge className={getColorForBadge("DPS")}>
+                      DPS: {sunDpsCount}
+                    </Badge>
+                    <Badge className={getColorForBadge("Healer")}>
+                      Healer: {sunHealerCount}
+                    </Badge>
+                    <Badge className={getColorForBadge("Tank")}>
+                      Tank: {sunTankCount}
+                    </Badge>
+                  </div>
+                </CardHeader>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
-            {teams.length > 0 ? (
-              teams.map(team => (
-                <TeamCard
-                  key={team.id}
-                  team={team}
-                  region={region}
-                  isMobile={isMobile}
-                  selectedUserId={selectedUserId}
-                  onAssignUser={handleAssignToTeam}
-                  onRemoveUser={handleRemoveFromTeam}
-                />
-              ))
-            ) : (
-              <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground col-span-full">
-                Chưa có nhóm nào được tạo
+                <Separator />
+
+                <CardContent className="px-4">
+                  <SortableContext
+                    items={sundayUsers.map(u => `available-sunday-${u.id}`)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <AvailableUsersDroppable
+                      droppableId="available-sunday"
+                      isOver={overContainerId === "available-sunday"}
+                    >
+                      {sundayUsers.length === 0 ? (
+                        <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
+                          Không có thành viên nào
+                        </div>
+                      ) : (
+                        sundayUsers.map(user => (
+                          <UserCard
+                            key={user.id}
+                            user={user}
+                            containerId="available-sunday"
+                            isAdmin={isAdmin}
+                            onDelete={handleDeleteUser}
+                            isMobile={isMobile}
+                            isSelected={selectedUserId === user.id}
+                            onSelect={handleSelectUser}
+                          />
+                        ))
+                      )}
+                    </AvailableUsersDroppable>
+                  </SortableContext>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Teams - Sunday */}
+            <div className="lg:col-span-3">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
+                <h3 className="text-lg font-semibold">Teams</h3>
+                <Button onClick={() => setShowTeamDialog(true)} size="sm">
+                  <Plus className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Nhóm mới</span>
+                  <span className="sm:hidden">Mới</span>
+                </Button>
               </div>
-            )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
+                {sundayTeams.length > 0 ? (
+                  sundayTeams.map(team => (
+                    <TeamCard
+                      key={team.id}
+                      team={team}
+                      region={region}
+                      isMobile={isMobile}
+                      selectedUserId={selectedUserId}
+                      onAssignUser={handleAssignToTeam}
+                      onRemoveUser={handleRemoveFromTeam}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground col-span-full">
+                    Chưa có nhóm nào được tạo
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -345,9 +687,81 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
       {/* Drag Overlay for smooth dragging */}
       <DragOverlay>
         {activeUser ? (
-          <UserCard user={activeUser} containerId="available" />
+          <UserCard user={activeUser} containerId="available-saturday" />
         ) : null}
       </DragOverlay>
+
+      {/* Team Creation Dialog */}
+      <Dialog open={showTeamDialog} onOpenChange={setShowTeamDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tạo nhóm mới</DialogTitle>
+            <DialogDescription>
+              Nhập thông tin để tạo một nhóm mới cho Bang Chiến
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="team-name">Tên nhóm *</Label>
+              <Input
+                id="team-name"
+                placeholder="Nhập tên nhóm..."
+                value={teamFormData.name}
+                onChange={e =>
+                  setTeamFormData({ ...teamFormData, name: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="team-day">Ngày *</Label>
+              <Select
+                value={teamFormData.day}
+                onValueChange={(value: "saturday" | "sunday") =>
+                  setTeamFormData({ ...teamFormData, day: value })
+                }
+              >
+                <SelectTrigger id="team-day">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="saturday">Thứ 7 (Saturday)</SelectItem>
+                  <SelectItem value="sunday">Chủ nhật (Sunday)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="team-description">Mô tả (Tùy chọn)</Label>
+              <Textarea
+                id="team-description"
+                placeholder="Nhập mô tả nhóm..."
+                rows={3}
+                value={teamFormData.description}
+                onChange={e =>
+                  setTeamFormData({
+                    ...teamFormData,
+                    description: e.target.value
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTeamDialog(false)}>
+              Hủy
+            </Button>
+            <Button
+              onClick={handleCreateTeam}
+              disabled={!teamFormData.name.trim()}
+            >
+              Tạo nhóm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DndContext>
   );
 }

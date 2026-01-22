@@ -14,6 +14,20 @@ export type ClassType =
   | "infernalTwinblades"
   | "mortalRopeDart";
 
+export type TimeSlot =
+  | "sat_19:30-20:00"
+  | "sat_20:00-20:30"
+  | "sat_20:30-21:00"
+  | "sat_21:00-21:30"
+  | "sat_21:30-22:00"
+  | "sat_22:00-22:30"
+  | "sun_19:30-20:00"
+  | "sun_20:00-20:30"
+  | "sun_20:30-21:00"
+  | "sun_21:00-21:30"
+  | "sun_21:30-22:00"
+  | "sun_22:00-22:30";
+
 export interface User {
   id: number;
   username: string;
@@ -47,6 +61,7 @@ export interface Team {
   eventId: number;
   name: string;
   description: string | null;
+  day: "saturday" | "sunday";
   createdAt: string;
   members: TeamMember[];
 }
@@ -54,6 +69,8 @@ export interface Team {
 export interface EventSignup {
   eventId: number;
   userId: number;
+  timeSlots: TimeSlot[];
+  notes: string | null;
   signedUpAt: string;
   user: User;
 }
@@ -131,6 +148,8 @@ class ApiClient {
     secondaryClass?: [ClassType, ClassType];
     primaryRole: "dps" | "healer" | "tank";
     secondaryRole?: "dps" | "healer" | "tank";
+    timeSlots: TimeSlot[];
+    notes?: string;
   }): Promise<SignupResponse> {
     return this.request<SignupResponse>("/auth/signup", {
       method: "POST",
@@ -152,11 +171,12 @@ class ApiClient {
   async createTeam(
     eventId: number,
     name: string,
+    day: "saturday" | "sunday",
     description?: string
   ): Promise<Team> {
     return this.request<Team>("/teams", {
       method: "POST",
-      body: JSON.stringify({ eventId, name, description })
+      body: JSON.stringify({ eventId, name, day, description })
     });
   }
 
