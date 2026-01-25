@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatClasses } from "@/lib/classes";
 import { getColorForBadge } from "@/lib/color";
 import { useGuildWarStore, type TeamMember } from "@/stores/eventStore";
+import { useState } from "react";
 
 interface MembersListProps {
   region: "VN" | "NA";
@@ -43,16 +44,29 @@ function MemberRow({ member }: { member: TeamMember }) {
   );
 }
 
+// Role priority for sorting: Tank -> Healer -> DPS
+const ROLE_PRIORITY: Record<string, number> = {
+  Tank: 1,
+  Healer: 2,
+  DPS: 3
+};
+
+type RoleFilter = "DPS" | "Healer" | "Tank" | null;
+
 export function MembersList({ region }: MembersListProps) {
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>(null);
   const { availableUsers, teams, isLoading, error } = useGuildWarStore(
     state => state[region]
   );
 
-  // Get all registered members (available + in teams)
-  const allMembers = [
-    ...availableUsers,
-    ...teams.flatMap(team => team.members)
-  ];
+  // Get all registered members (available + in teams), sorted by primaryRole
+  const allMembers = [...availableUsers, ...teams.flatMap(team => team.members)]
+    .sort(
+      (a, b) =>
+        (ROLE_PRIORITY[a.primaryRole] ?? 99) -
+        (ROLE_PRIORITY[b.primaryRole] ?? 99)
+    )
+    .filter(m => !roleFilter || m.primaryRole === roleFilter);
 
   const dpsCount = allMembers.filter(m => m.primaryRole === "DPS").length;
   const healerCount = allMembers.filter(m => m.primaryRole === "Healer").length;
@@ -94,11 +108,26 @@ export function MembersList({ region }: MembersListProps) {
           Thành viên đã đăng ký ({allMembers.length})
         </CardTitle>
         <div className="flex items-center flex-wrap gap-2 mt-2">
-          <Badge className={getColorForBadge("DPS")}>DPS: {dpsCount}</Badge>
-          <Badge className={getColorForBadge("Healer")}>
+          <Badge
+            className={`${getColorForBadge("DPS")} cursor-pointer transition-all ${roleFilter === "DPS" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+            onClick={() => setRoleFilter(roleFilter === "DPS" ? null : "DPS")}
+          >
+            DPS: {dpsCount}
+          </Badge>
+          <Badge
+            className={`${getColorForBadge("Healer")} cursor-pointer transition-all ${roleFilter === "Healer" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+            onClick={() =>
+              setRoleFilter(roleFilter === "Healer" ? null : "Healer")
+            }
+          >
             Healer: {healerCount}
           </Badge>
-          <Badge className={getColorForBadge("Tank")}>Tank: {tankCount}</Badge>
+          <Badge
+            className={`${getColorForBadge("Tank")} cursor-pointer transition-all ${roleFilter === "Tank" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+            onClick={() => setRoleFilter(roleFilter === "Tank" ? null : "Tank")}
+          >
+            Tank: {tankCount}
+          </Badge>
         </div>
       </CardHeader>
 

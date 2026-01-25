@@ -28,6 +28,15 @@ import { Input } from "../ui/input";
 import { Separator } from "../ui/separator";
 import UserCard from "./UserCard";
 
+// Role priority for sorting: Tank -> Healer -> DPS
+const ROLE_PRIORITY: Record<string, number> = {
+  Tank: 1,
+  Healer: 2,
+  DPS: 3
+};
+
+type RoleFilter = "DPS" | "Healer" | "Tank" | null;
+
 function TeamCard({
   team,
   region,
@@ -35,7 +44,9 @@ function TeamCard({
   selectedUserId,
   onAssignUser,
   onRemoveUser,
-  dayFilter
+  dayFilter,
+  roleFilter,
+  setRoleFilter
 }: {
   team: Team;
   region: "VN" | "NA";
@@ -44,6 +55,8 @@ function TeamCard({
   onAssignUser?: (teamId: string) => void;
   onRemoveUser?: (userId: string, teamId: string) => void;
   dayFilter?: "sat" | "sun";
+  roleFilter?: RoleFilter;
+  setRoleFilter?: (filter: RoleFilter) => void;
 }) {
   const renameTeam = useGuildWarStore(state => state.renameTeam);
   const deleteTeam = useGuildWarStore(state => state.deleteTeam);
@@ -122,18 +135,31 @@ function TeamCard({
         </div>
 
         <div className="flex items-center gap-2">
-          <Badge className={getColorForBadge("DPS")}>
+          <Badge
+            className={`${getColorForBadge("DPS")} cursor-pointer transition-all ${roleFilter === "DPS" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+            onClick={() => setRoleFilter?.(roleFilter === "DPS" ? null : "DPS")}
+          >
             DPS:{" "}
             {team.members.filter(member => member.primaryRole === "DPS").length}
           </Badge>
-          <Badge className={getColorForBadge("Healer")}>
+          <Badge
+            className={`${getColorForBadge("Healer")} cursor-pointer transition-all ${roleFilter === "Healer" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+            onClick={() =>
+              setRoleFilter?.(roleFilter === "Healer" ? null : "Healer")
+            }
+          >
             Healer:{" "}
             {
               team.members.filter(member => member.primaryRole === "Healer")
                 .length
             }
           </Badge>
-          <Badge className={getColorForBadge("Tank")}>
+          <Badge
+            className={`${getColorForBadge("Tank")} cursor-pointer transition-all ${roleFilter === "Tank" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+            onClick={() =>
+              setRoleFilter?.(roleFilter === "Tank" ? null : "Tank")
+            }
+          >
             Tank:{" "}
             {
               team.members.filter(member => member.primaryRole === "Tank")
@@ -157,25 +183,36 @@ function TeamCard({
 
       <CardContent ref={setNodeRef}>
         <SortableContext
-          items={team.members.map(m => `${team.id}-${m.id}`)}
+          items={team.members
+            .filter(m => !roleFilter || m.primaryRole === roleFilter)
+            .map(m => `${team.id}-${m.id}`)}
           strategy={verticalListSortingStrategy}
         >
           <div className="space-y-2 min-h-20">
-            {team.members.length === 0 ? (
+            {team.members.filter(
+              m => !roleFilter || m.primaryRole === roleFilter
+            ).length === 0 ? (
               <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
-                Chưa có thành viên
+                {roleFilter ? `Không có ${roleFilter}` : "Chưa có thành viên"}
               </div>
             ) : (
-              team.members.map(user => (
-                <UserCard
-                  key={user.id}
-                  user={user}
-                  containerId={team.id}
-                  isMobile={isMobile}
-                  onRemove={userId => onRemoveUser?.(userId, team.id)}
-                  dayFilter={dayFilter}
-                />
-              ))
+              [...team.members]
+                .filter(m => !roleFilter || m.primaryRole === roleFilter)
+                .sort(
+                  (a, b) =>
+                    (ROLE_PRIORITY[a.primaryRole] ?? 99) -
+                    (ROLE_PRIORITY[b.primaryRole] ?? 99)
+                )
+                .map(user => (
+                  <UserCard
+                    key={user.id}
+                    user={user}
+                    containerId={team.id}
+                    isMobile={isMobile}
+                    onRemove={userId => onRemoveUser?.(userId, team.id)}
+                    dayFilter={dayFilter}
+                  />
+                ))
             )}
           </div>
         </SortableContext>

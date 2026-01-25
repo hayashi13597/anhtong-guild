@@ -11,10 +11,20 @@ import {
   type Team,
   type TeamMember
 } from "@/stores/eventStore";
+import { useState } from "react";
 
 interface TeamsViewProps {
   region: "VN" | "NA";
 }
+
+// Role priority for sorting: Tank -> Healer -> DPS
+const ROLE_PRIORITY: Record<string, number> = {
+  Tank: 1,
+  Healer: 2,
+  DPS: 3
+};
+
+type RoleFilter = "DPS" | "Healer" | "Tank" | null;
 
 function TeamMemberRow({ member }: { member: TeamMember }) {
   return (
@@ -51,35 +61,59 @@ function TeamMemberRow({ member }: { member: TeamMember }) {
 }
 
 function TeamCard({ team }: { team: Team }) {
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>(null);
   const dpsCount = team.members.filter(m => m.primaryRole === "DPS").length;
   const healerCount = team.members.filter(
     m => m.primaryRole === "Healer"
   ).length;
   const tankCount = team.members.filter(m => m.primaryRole === "Tank").length;
 
+  const filteredMembers = [...team.members]
+    .sort(
+      (a, b) =>
+        (ROLE_PRIORITY[a.primaryRole] ?? 99) -
+        (ROLE_PRIORITY[b.primaryRole] ?? 99)
+    )
+    .filter(m => !roleFilter || m.primaryRole === roleFilter);
+
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base sm:text-lg">{team.name}</CardTitle>
         <div className="flex items-center flex-wrap gap-2 mt-2">
-          <Badge className={getColorForBadge("DPS")}>DPS: {dpsCount}</Badge>
-          <Badge className={getColorForBadge("Healer")}>
+          <Badge
+            className={`${getColorForBadge("DPS")} cursor-pointer transition-all ${roleFilter === "DPS" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+            onClick={() => setRoleFilter(roleFilter === "DPS" ? null : "DPS")}
+          >
+            DPS: {dpsCount}
+          </Badge>
+          <Badge
+            className={`${getColorForBadge("Healer")} cursor-pointer transition-all ${roleFilter === "Healer" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+            onClick={() =>
+              setRoleFilter(roleFilter === "Healer" ? null : "Healer")
+            }
+          >
             Heal: {healerCount}
           </Badge>
-          <Badge className={getColorForBadge("Tank")}>Tank: {tankCount}</Badge>
+          <Badge
+            className={`${getColorForBadge("Tank")} cursor-pointer transition-all ${roleFilter === "Tank" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+            onClick={() => setRoleFilter(roleFilter === "Tank" ? null : "Tank")}
+          >
+            Tank: {tankCount}
+          </Badge>
         </div>
       </CardHeader>
 
       <Separator />
 
       <CardContent>
-        {team.members.length === 0 ? (
+        {filteredMembers.length === 0 ? (
           <div className="text-center py-4 text-muted-foreground text-sm">
-            Chưa có thành viên
+            {roleFilter ? `Không có ${roleFilter}` : "Chưa có thành viên"}
           </div>
         ) : (
           <div className="space-y-1">
-            {team.members.map(member => (
+            {filteredMembers.map(member => (
               <TeamMemberRow key={member.id} member={member} />
             ))}
           </div>

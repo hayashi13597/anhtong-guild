@@ -19,6 +19,15 @@ import {
 import { Plus, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 
+// Role priority for sorting: Tank -> Healer -> DPS
+const ROLE_PRIORITY: Record<string, number> = {
+  Tank: 1,
+  Healer: 2,
+  DPS: 3
+};
+
+type RoleFilter = "DPS" | "Healer" | "Tank" | null;
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -103,6 +112,21 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
     day: "saturday" as "saturday" | "sunday",
     description: ""
   });
+
+  // Filter states for available users and teams
+  const [satAvailableFilter, setSatAvailableFilter] =
+    useState<RoleFilter>(null);
+  const [sunAvailableFilter, setSunAvailableFilter] =
+    useState<RoleFilter>(null);
+  const [teamFilters, setTeamFilters] = useState<Record<string, RoleFilter>>(
+    {}
+  );
+
+  // Helper to get/set team filter
+  const getTeamFilter = (teamId: string) => teamFilters[teamId] ?? null;
+  const setTeamFilter = (teamId: string, filter: RoleFilter) => {
+    setTeamFilters(prev => ({ ...prev, [teamId]: filter }));
+  };
 
   // Separate teams by day first
   const saturdayTeams = teams.filter(t => t.day === "saturday");
@@ -511,13 +535,34 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                     Thành viên đã đăng ký
                   </CardTitle>
                   <div className="flex items-center flex-wrap gap-2 mt-2">
-                    <Badge className={getColorForBadge("DPS")}>
+                    <Badge
+                      className={`${getColorForBadge("DPS")} cursor-pointer transition-all ${satAvailableFilter === "DPS" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                      onClick={() =>
+                        setSatAvailableFilter(
+                          satAvailableFilter === "DPS" ? null : "DPS"
+                        )
+                      }
+                    >
                       DPS: {satDpsCount}
                     </Badge>
-                    <Badge className={getColorForBadge("Healer")}>
+                    <Badge
+                      className={`${getColorForBadge("Healer")} cursor-pointer transition-all ${satAvailableFilter === "Healer" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                      onClick={() =>
+                        setSatAvailableFilter(
+                          satAvailableFilter === "Healer" ? null : "Healer"
+                        )
+                      }
+                    >
                       Healer: {satHealerCount}
                     </Badge>
-                    <Badge className={getColorForBadge("Tank")}>
+                    <Badge
+                      className={`${getColorForBadge("Tank")} cursor-pointer transition-all ${satAvailableFilter === "Tank" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                      onClick={() =>
+                        setSatAvailableFilter(
+                          satAvailableFilter === "Tank" ? null : "Tank"
+                        )
+                      }
+                    >
                       Tank: {satTankCount}
                     </Badge>
                   </div>
@@ -527,31 +572,54 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
 
                 <CardContent className="px-4">
                   <SortableContext
-                    items={saturdayUsers.map(u => `available-saturday-${u.id}`)}
+                    items={saturdayUsers
+                      .filter(
+                        u =>
+                          !satAvailableFilter ||
+                          u.primaryRole === satAvailableFilter
+                      )
+                      .map(u => `available-saturday-${u.id}`)}
                     strategy={verticalListSortingStrategy}
                   >
                     <AvailableUsersDroppable
                       droppableId="available-saturday"
                       isOver={overContainerId === "available-saturday"}
                     >
-                      {saturdayUsers.length === 0 ? (
+                      {saturdayUsers.filter(
+                        u =>
+                          !satAvailableFilter ||
+                          u.primaryRole === satAvailableFilter
+                      ).length === 0 ? (
                         <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
-                          Không có thành viên nào
+                          {satAvailableFilter
+                            ? `Không có ${satAvailableFilter}`
+                            : "Không có thành viên nào"}
                         </div>
                       ) : (
-                        saturdayUsers.map(user => (
-                          <UserCard
-                            key={user.id}
-                            user={user}
-                            containerId="available-saturday"
-                            isAdmin={isAdmin}
-                            onDelete={handleDeleteUser}
-                            isMobile={isMobile}
-                            isSelected={selectedUserId === user.id}
-                            onSelect={handleSelectUser}
-                            dayFilter="sat"
-                          />
-                        ))
+                        [...saturdayUsers]
+                          .filter(
+                            u =>
+                              !satAvailableFilter ||
+                              u.primaryRole === satAvailableFilter
+                          )
+                          .sort(
+                            (a, b) =>
+                              (ROLE_PRIORITY[a.primaryRole] ?? 99) -
+                              (ROLE_PRIORITY[b.primaryRole] ?? 99)
+                          )
+                          .map(user => (
+                            <UserCard
+                              key={user.id}
+                              user={user}
+                              containerId="available-saturday"
+                              isAdmin={isAdmin}
+                              onDelete={handleDeleteUser}
+                              isMobile={isMobile}
+                              isSelected={selectedUserId === user.id}
+                              onSelect={handleSelectUser}
+                              dayFilter="sat"
+                            />
+                          ))
                       )}
                     </AvailableUsersDroppable>
                   </SortableContext>
@@ -582,6 +650,8 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                       onAssignUser={handleAssignToTeam}
                       onRemoveUser={handleRemoveFromTeam}
                       dayFilter="sat"
+                      roleFilter={getTeamFilter(team.id)}
+                      setRoleFilter={filter => setTeamFilter(team.id, filter)}
                     />
                   ))
                 ) : (
@@ -606,13 +676,34 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                     Thành viên đã đăng ký
                   </CardTitle>
                   <div className="flex items-center flex-wrap gap-2 mt-2">
-                    <Badge className={getColorForBadge("DPS")}>
+                    <Badge
+                      className={`${getColorForBadge("DPS")} cursor-pointer transition-all ${sunAvailableFilter === "DPS" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                      onClick={() =>
+                        setSunAvailableFilter(
+                          sunAvailableFilter === "DPS" ? null : "DPS"
+                        )
+                      }
+                    >
                       DPS: {sunDpsCount}
                     </Badge>
-                    <Badge className={getColorForBadge("Healer")}>
+                    <Badge
+                      className={`${getColorForBadge("Healer")} cursor-pointer transition-all ${sunAvailableFilter === "Healer" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                      onClick={() =>
+                        setSunAvailableFilter(
+                          sunAvailableFilter === "Healer" ? null : "Healer"
+                        )
+                      }
+                    >
                       Healer: {sunHealerCount}
                     </Badge>
-                    <Badge className={getColorForBadge("Tank")}>
+                    <Badge
+                      className={`${getColorForBadge("Tank")} cursor-pointer transition-all ${sunAvailableFilter === "Tank" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                      onClick={() =>
+                        setSunAvailableFilter(
+                          sunAvailableFilter === "Tank" ? null : "Tank"
+                        )
+                      }
+                    >
                       Tank: {sunTankCount}
                     </Badge>
                   </div>
@@ -622,31 +713,54 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
 
                 <CardContent className="px-4">
                   <SortableContext
-                    items={sundayUsers.map(u => `available-sunday-${u.id}`)}
+                    items={sundayUsers
+                      .filter(
+                        u =>
+                          !sunAvailableFilter ||
+                          u.primaryRole === sunAvailableFilter
+                      )
+                      .map(u => `available-sunday-${u.id}`)}
                     strategy={verticalListSortingStrategy}
                   >
                     <AvailableUsersDroppable
                       droppableId="available-sunday"
                       isOver={overContainerId === "available-sunday"}
                     >
-                      {sundayUsers.length === 0 ? (
+                      {sundayUsers.filter(
+                        u =>
+                          !sunAvailableFilter ||
+                          u.primaryRole === sunAvailableFilter
+                      ).length === 0 ? (
                         <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
-                          Không có thành viên nào
+                          {sunAvailableFilter
+                            ? `Không có ${sunAvailableFilter}`
+                            : "Không có thành viên nào"}
                         </div>
                       ) : (
-                        sundayUsers.map(user => (
-                          <UserCard
-                            key={user.id}
-                            user={user}
-                            containerId="available-sunday"
-                            isAdmin={isAdmin}
-                            onDelete={handleDeleteUser}
-                            isMobile={isMobile}
-                            isSelected={selectedUserId === user.id}
-                            onSelect={handleSelectUser}
-                            dayFilter="sun"
-                          />
-                        ))
+                        [...sundayUsers]
+                          .filter(
+                            u =>
+                              !sunAvailableFilter ||
+                              u.primaryRole === sunAvailableFilter
+                          )
+                          .sort(
+                            (a, b) =>
+                              (ROLE_PRIORITY[a.primaryRole] ?? 99) -
+                              (ROLE_PRIORITY[b.primaryRole] ?? 99)
+                          )
+                          .map(user => (
+                            <UserCard
+                              key={user.id}
+                              user={user}
+                              containerId="available-sunday"
+                              isAdmin={isAdmin}
+                              onDelete={handleDeleteUser}
+                              isMobile={isMobile}
+                              isSelected={selectedUserId === user.id}
+                              onSelect={handleSelectUser}
+                              dayFilter="sun"
+                            />
+                          ))
                       )}
                     </AvailableUsersDroppable>
                   </SortableContext>
@@ -677,6 +791,8 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                       onAssignUser={handleAssignToTeam}
                       onRemoveUser={handleRemoveFromTeam}
                       dayFilter="sun"
+                      roleFilter={getTeamFilter(team.id)}
+                      setRoleFilter={filter => setTeamFilter(team.id, filter)}
                     />
                   ))
                 ) : (

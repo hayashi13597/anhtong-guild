@@ -12,7 +12,16 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGuildWarStore } from "@/stores/eventStore";
 import { LogOut, Shield } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+// Role priority for sorting: Tank -> Healer -> DPS
+const ROLE_PRIORITY: Record<string, number> = {
+  Tank: 1,
+  Healer: 2,
+  DPS: 3
+};
+
+type RoleFilter = "DPS" | "Healer" | "Tank" | null;
 
 const GuildWarPage = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -90,7 +99,20 @@ const GuildWarPage = () => {
 };
 
 function PublicView({ region }: { region: "VN" | "NA" }) {
+  const [satAvailableFilter, setSatAvailableFilter] =
+    useState<RoleFilter>(null);
+  const [sunAvailableFilter, setSunAvailableFilter] =
+    useState<RoleFilter>(null);
+  const [teamFilters, setTeamFilters] = useState<Record<string, RoleFilter>>(
+    {}
+  );
   const { availableUsers, teams } = useGuildWarStore(state => state[region]);
+
+  // Helper to get/set team filter
+  const getTeamFilter = (teamId: string) => teamFilters[teamId] ?? null;
+  const setTeamFilter = (teamId: string, filter: RoleFilter) => {
+    setTeamFilters(prev => ({ ...prev, [teamId]: filter }));
+  };
 
   // Filter users and teams by day
   const usersInSaturdayTeams = useMemo(() => {
@@ -105,21 +127,33 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
 
   const saturdayUsers = useMemo(
     () =>
-      availableUsers.filter(
-        u =>
-          u.timeSlots.some(slot => slot.startsWith("sat_")) &&
-          !usersInSaturdayTeams.has(u.id)
-      ),
+      availableUsers
+        .filter(
+          u =>
+            u.timeSlots.some(slot => slot.startsWith("sat_")) &&
+            !usersInSaturdayTeams.has(u.id)
+        )
+        .sort(
+          (a, b) =>
+            (ROLE_PRIORITY[a.primaryRole] ?? 99) -
+            (ROLE_PRIORITY[b.primaryRole] ?? 99)
+        ),
     [availableUsers, usersInSaturdayTeams]
   );
 
   const sundayUsers = useMemo(
     () =>
-      availableUsers.filter(
-        u =>
-          u.timeSlots.some(slot => slot.startsWith("sun_")) &&
-          !usersInSundayTeams.has(u.id)
-      ),
+      availableUsers
+        .filter(
+          u =>
+            u.timeSlots.some(slot => slot.startsWith("sun_")) &&
+            !usersInSundayTeams.has(u.id)
+        )
+        .sort(
+          (a, b) =>
+            (ROLE_PRIORITY[a.primaryRole] ?? 99) -
+            (ROLE_PRIORITY[b.primaryRole] ?? 99)
+        ),
     [availableUsers, usersInSundayTeams]
   );
 
@@ -161,13 +195,34 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
                   Thành viên đã đăng ký
                 </CardTitle>
                 <div className="flex items-center flex-wrap gap-2 mt-2">
-                  <Badge className={getColorForBadge("DPS")}>
+                  <Badge
+                    className={`${getColorForBadge("DPS")} cursor-pointer transition-all ${satAvailableFilter === "DPS" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                    onClick={() =>
+                      setSatAvailableFilter(
+                        satAvailableFilter === "DPS" ? null : "DPS"
+                      )
+                    }
+                  >
                     DPS: {satDpsCount}
                   </Badge>
-                  <Badge className={getColorForBadge("Healer")}>
+                  <Badge
+                    className={`${getColorForBadge("Healer")} cursor-pointer transition-all ${satAvailableFilter === "Healer" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                    onClick={() =>
+                      setSatAvailableFilter(
+                        satAvailableFilter === "Healer" ? null : "Healer"
+                      )
+                    }
+                  >
                     Healer: {satHealerCount}
                   </Badge>
-                  <Badge className={getColorForBadge("Tank")}>
+                  <Badge
+                    className={`${getColorForBadge("Tank")} cursor-pointer transition-all ${satAvailableFilter === "Tank" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                    onClick={() =>
+                      setSatAvailableFilter(
+                        satAvailableFilter === "Tank" ? null : "Tank"
+                      )
+                    }
+                  >
                     Tank: {satTankCount}
                   </Badge>
                 </div>
@@ -177,19 +232,31 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
 
               <CardContent className="px-4">
                 <div className="space-y-2 max-h-150 overflow-y-auto min-h-20">
-                  {saturdayUsers.length === 0 ? (
+                  {saturdayUsers.filter(
+                    u =>
+                      !satAvailableFilter ||
+                      u.primaryRole === satAvailableFilter
+                  ).length === 0 ? (
                     <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
-                      Không có thành viên nào
+                      {satAvailableFilter
+                        ? `Không có ${satAvailableFilter}`
+                        : "Không có thành viên nào"}
                     </div>
                   ) : (
-                    saturdayUsers.map(user => (
-                      <UserCard
-                        key={user.id}
-                        user={user}
-                        containerId="available-saturday"
-                        dayFilter="sat"
-                      />
-                    ))
+                    saturdayUsers
+                      .filter(
+                        u =>
+                          !satAvailableFilter ||
+                          u.primaryRole === satAvailableFilter
+                      )
+                      .map(user => (
+                        <UserCard
+                          key={user.id}
+                          user={user}
+                          containerId="available-saturday"
+                          dayFilter="sat"
+                        />
+                      ))
                   )}
                 </div>
               </CardContent>
@@ -200,65 +267,105 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
           <div className="lg:col-span-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
               {saturdayTeams.length > 0 ? (
-                saturdayTeams.map(team => (
-                  <Card key={team.id} className="min-h-75">
-                    <CardHeader className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base sm:text-lg">
-                          {team.name}
-                        </CardTitle>
-                      </div>
+                saturdayTeams.map(team => {
+                  const teamFilter = getTeamFilter(team.id);
+                  return (
+                    <Card key={team.id} className="min-h-75">
+                      <CardHeader className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base sm:text-lg">
+                            {team.name}
+                          </CardTitle>
+                        </div>
 
-                      <div className="flex items-center gap-2">
-                        <Badge className={getColorForBadge("DPS")}>
-                          DPS:{" "}
-                          {
-                            team.members.filter(
-                              member => member.primaryRole === "DPS"
-                            ).length
-                          }
-                        </Badge>
-                        <Badge className={getColorForBadge("Healer")}>
-                          Healer:{" "}
-                          {
-                            team.members.filter(
-                              member => member.primaryRole === "Healer"
-                            ).length
-                          }
-                        </Badge>
-                        <Badge className={getColorForBadge("Tank")}>
-                          Tank:{" "}
-                          {
-                            team.members.filter(
-                              member => member.primaryRole === "Tank"
-                            ).length
-                          }
-                        </Badge>
-                      </div>
-                    </CardHeader>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className={`${getColorForBadge("DPS")} cursor-pointer transition-all ${teamFilter === "DPS" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                            onClick={() =>
+                              setTeamFilter(
+                                team.id,
+                                teamFilter === "DPS" ? null : "DPS"
+                              )
+                            }
+                          >
+                            DPS:{" "}
+                            {
+                              team.members.filter(
+                                member => member.primaryRole === "DPS"
+                              ).length
+                            }
+                          </Badge>
+                          <Badge
+                            className={`${getColorForBadge("Healer")} cursor-pointer transition-all ${teamFilter === "Healer" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                            onClick={() =>
+                              setTeamFilter(
+                                team.id,
+                                teamFilter === "Healer" ? null : "Healer"
+                              )
+                            }
+                          >
+                            Healer:{" "}
+                            {
+                              team.members.filter(
+                                member => member.primaryRole === "Healer"
+                              ).length
+                            }
+                          </Badge>
+                          <Badge
+                            className={`${getColorForBadge("Tank")} cursor-pointer transition-all ${teamFilter === "Tank" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                            onClick={() =>
+                              setTeamFilter(
+                                team.id,
+                                teamFilter === "Tank" ? null : "Tank"
+                              )
+                            }
+                          >
+                            Tank:{" "}
+                            {
+                              team.members.filter(
+                                member => member.primaryRole === "Tank"
+                              ).length
+                            }
+                          </Badge>
+                        </div>
+                      </CardHeader>
 
-                    <Separator />
+                      <Separator />
 
-                    <CardContent>
-                      <div className="space-y-2 min-h-20">
-                        {team.members.length === 0 ? (
-                          <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
-                            Chưa có thành viên
-                          </div>
-                        ) : (
-                          team.members.map(user => (
-                            <UserCard
-                              key={user.id}
-                              user={user}
-                              containerId={team.id}
-                              dayFilter="sat"
-                            />
-                          ))
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+                      <CardContent>
+                        <div className="space-y-2 min-h-20">
+                          {[...team.members].filter(
+                            u => !teamFilter || u.primaryRole === teamFilter
+                          ).length === 0 ? (
+                            <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
+                              {teamFilter
+                                ? `Không có ${teamFilter}`
+                                : "Chưa có thành viên"}
+                            </div>
+                          ) : (
+                            [...team.members]
+                              .sort(
+                                (a, b) =>
+                                  (ROLE_PRIORITY[a.primaryRole] ?? 99) -
+                                  (ROLE_PRIORITY[b.primaryRole] ?? 99)
+                              )
+                              .filter(
+                                u => !teamFilter || u.primaryRole === teamFilter
+                              )
+                              .map(user => (
+                                <UserCard
+                                  key={user.id}
+                                  user={user}
+                                  containerId={team.id}
+                                  dayFilter="sat"
+                                />
+                              ))
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
               ) : (
                 <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground col-span-full">
                   Chưa có nhóm nào được tạo
@@ -281,13 +388,34 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
                   Thành viên đã đăng ký
                 </CardTitle>
                 <div className="flex items-center flex-wrap gap-2 mt-2">
-                  <Badge className={getColorForBadge("DPS")}>
+                  <Badge
+                    className={`${getColorForBadge("DPS")} cursor-pointer transition-all ${sunAvailableFilter === "DPS" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                    onClick={() =>
+                      setSunAvailableFilter(
+                        sunAvailableFilter === "DPS" ? null : "DPS"
+                      )
+                    }
+                  >
                     DPS: {sunDpsCount}
                   </Badge>
-                  <Badge className={getColorForBadge("Healer")}>
+                  <Badge
+                    className={`${getColorForBadge("Healer")} cursor-pointer transition-all ${sunAvailableFilter === "Healer" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                    onClick={() =>
+                      setSunAvailableFilter(
+                        sunAvailableFilter === "Healer" ? null : "Healer"
+                      )
+                    }
+                  >
                     Healer: {sunHealerCount}
                   </Badge>
-                  <Badge className={getColorForBadge("Tank")}>
+                  <Badge
+                    className={`${getColorForBadge("Tank")} cursor-pointer transition-all ${sunAvailableFilter === "Tank" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                    onClick={() =>
+                      setSunAvailableFilter(
+                        sunAvailableFilter === "Tank" ? null : "Tank"
+                      )
+                    }
+                  >
                     Tank: {sunTankCount}
                   </Badge>
                 </div>
@@ -297,19 +425,31 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
 
               <CardContent className="px-4">
                 <div className="space-y-2 max-h-150 overflow-y-auto min-h-20">
-                  {sundayUsers.length === 0 ? (
+                  {sundayUsers.filter(
+                    u =>
+                      !sunAvailableFilter ||
+                      u.primaryRole === sunAvailableFilter
+                  ).length === 0 ? (
                     <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
-                      Không có thành viên nào
+                      {sunAvailableFilter
+                        ? `Không có ${sunAvailableFilter}`
+                        : "Không có thành viên nào"}
                     </div>
                   ) : (
-                    sundayUsers.map(user => (
-                      <UserCard
-                        key={user.id}
-                        user={user}
-                        containerId="available-sunday"
-                        dayFilter="sun"
-                      />
-                    ))
+                    sundayUsers
+                      .filter(
+                        u =>
+                          !sunAvailableFilter ||
+                          u.primaryRole === sunAvailableFilter
+                      )
+                      .map(user => (
+                        <UserCard
+                          key={user.id}
+                          user={user}
+                          containerId="available-sunday"
+                          dayFilter="sun"
+                        />
+                      ))
                   )}
                 </div>
               </CardContent>
@@ -320,65 +460,105 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
           <div className="lg:col-span-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
               {sundayTeams.length > 0 ? (
-                sundayTeams.map(team => (
-                  <Card key={team.id} className="min-h-75">
-                    <CardHeader className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base sm:text-lg">
-                          {team.name}
-                        </CardTitle>
-                      </div>
+                sundayTeams.map(team => {
+                  const teamFilter = getTeamFilter(team.id);
+                  return (
+                    <Card key={team.id} className="min-h-75">
+                      <CardHeader className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base sm:text-lg">
+                            {team.name}
+                          </CardTitle>
+                        </div>
 
-                      <div className="flex items-center gap-2">
-                        <Badge className={getColorForBadge("DPS")}>
-                          DPS:{" "}
-                          {
-                            team.members.filter(
-                              member => member.primaryRole === "DPS"
-                            ).length
-                          }
-                        </Badge>
-                        <Badge className={getColorForBadge("Healer")}>
-                          Healer:{" "}
-                          {
-                            team.members.filter(
-                              member => member.primaryRole === "Healer"
-                            ).length
-                          }
-                        </Badge>
-                        <Badge className={getColorForBadge("Tank")}>
-                          Tank:{" "}
-                          {
-                            team.members.filter(
-                              member => member.primaryRole === "Tank"
-                            ).length
-                          }
-                        </Badge>
-                      </div>
-                    </CardHeader>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            className={`${getColorForBadge("DPS")} cursor-pointer transition-all ${teamFilter === "DPS" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                            onClick={() =>
+                              setTeamFilter(
+                                team.id,
+                                teamFilter === "DPS" ? null : "DPS"
+                              )
+                            }
+                          >
+                            DPS:{" "}
+                            {
+                              team.members.filter(
+                                member => member.primaryRole === "DPS"
+                              ).length
+                            }
+                          </Badge>
+                          <Badge
+                            className={`${getColorForBadge("Healer")} cursor-pointer transition-all ${teamFilter === "Healer" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                            onClick={() =>
+                              setTeamFilter(
+                                team.id,
+                                teamFilter === "Healer" ? null : "Healer"
+                              )
+                            }
+                          >
+                            Healer:{" "}
+                            {
+                              team.members.filter(
+                                member => member.primaryRole === "Healer"
+                              ).length
+                            }
+                          </Badge>
+                          <Badge
+                            className={`${getColorForBadge("Tank")} cursor-pointer transition-all ${teamFilter === "Tank" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
+                            onClick={() =>
+                              setTeamFilter(
+                                team.id,
+                                teamFilter === "Tank" ? null : "Tank"
+                              )
+                            }
+                          >
+                            Tank:{" "}
+                            {
+                              team.members.filter(
+                                member => member.primaryRole === "Tank"
+                              ).length
+                            }
+                          </Badge>
+                        </div>
+                      </CardHeader>
 
-                    <Separator />
+                      <Separator />
 
-                    <CardContent>
-                      <div className="space-y-2 min-h-20">
-                        {team.members.length === 0 ? (
-                          <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
-                            Chưa có thành viên
-                          </div>
-                        ) : (
-                          team.members.map(user => (
-                            <UserCard
-                              key={user.id}
-                              user={user}
-                              containerId={team.id}
-                              dayFilter="sun"
-                            />
-                          ))
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
+                      <CardContent>
+                        <div className="space-y-2 min-h-20">
+                          {[...team.members].filter(
+                            u => !teamFilter || u.primaryRole === teamFilter
+                          ).length === 0 ? (
+                            <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground">
+                              {teamFilter
+                                ? `Không có ${teamFilter}`
+                                : "Chưa có thành viên"}
+                            </div>
+                          ) : (
+                            [...team.members]
+                              .sort(
+                                (a, b) =>
+                                  (ROLE_PRIORITY[a.primaryRole] ?? 99) -
+                                  (ROLE_PRIORITY[b.primaryRole] ?? 99)
+                              )
+                              .filter(
+                                u => !teamFilter || u.primaryRole === teamFilter
+                              )
+                              .map(user => (
+                                <UserCard
+                                  key={user.id}
+                                  user={user}
+                                  containerId={team.id}
+                                  dayFilter="sun"
+                                />
+                              ))
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
               ) : (
                 <div className="text-center py-8 border-2 border-dashed rounded-lg text-muted-foreground col-span-full">
                   Chưa có nhóm nào được tạo
