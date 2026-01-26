@@ -54,6 +54,9 @@ interface GuildWarStore {
   fetchEvent: (region: RegionKey, forceRefresh?: boolean) => Promise<void>;
   invalidateCache: (region: RegionKey) => void;
 
+  // Event creation
+  createEvent: (region: RegionKey) => Promise<void>;
+
   // Admin actions
   addTeam: (
     region: RegionKey,
@@ -167,6 +170,22 @@ export const useGuildWarStore = create<GuildWarStore>((set, get) => ({
     set(state => ({
       [region]: { ...state[region], lastFetched: null }
     }));
+  },
+
+  createEvent: async (region: RegionKey) => {
+    try {
+      await api.createEvent();
+      toast.success("Tạo sự kiện mới thành công!");
+
+      // Force refresh to show the new event
+      get().invalidateCache(region);
+      await get().fetchEvent(region, true);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to create event";
+      toast.error(`Lỗi khi tạo sự kiện: ${errorMessage}`);
+      throw error;
+    }
   },
 
   fetchEvent: async (region: RegionKey, forceRefresh = false) => {

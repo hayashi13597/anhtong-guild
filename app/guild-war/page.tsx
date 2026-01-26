@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getColorForBadge } from "@/lib/color";
 import { useAuthStore } from "@/stores/authStore";
 import { useGuildWarStore } from "@/stores/eventStore";
-import { LogOut, Shield } from "lucide-react";
+import { LogOut, RefreshCcw, Shield } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -26,12 +26,28 @@ type RoleFilter = "DPS" | "Healer" | "Tank" | null;
 const GuildWarPage = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
   const fetchEvent = useGuildWarStore(state => state.fetchEvent);
+  const createEvent = useGuildWarStore(state => state.createEvent);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Fetch event data on mount
   useEffect(() => {
     fetchEvent("VN");
     fetchEvent("NA");
   }, [fetchEvent]);
+
+  const handleCreateEvent = async () => {
+    if (!user?.region) return;
+
+    setIsCreating(true);
+    try {
+      const region = user.region.toUpperCase() as "VN" | "NA";
+      await createEvent(region);
+    } catch (error) {
+      console.error("Failed to create event:", error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   return (
     <main className="max-w-7xl lg:max-w-4/5 min-h-screen mx-auto py-6 lg:py-20 px-4 space-y-6 lg:space-y-10">
@@ -69,9 +85,21 @@ const GuildWarPage = () => {
             <TabsTrigger value="VN">VN Server</TabsTrigger>
             <TabsTrigger value="NA">NA Server</TabsTrigger>
           </TabsList>
-          <Button asChild>
-            <Link href="/guild-war/register">Đăng ký tham gia</Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild>
+              <Link href="/guild-war/register">Đăng ký tham gia</Link>
+            </Button>
+            {isAuthenticated && (
+              <Button
+                variant="secondary"
+                onClick={handleCreateEvent}
+                disabled={isCreating}
+              >
+                <RefreshCcw className="w-4 h-4 mr-2" />
+                {isCreating ? "Đang làm mới..." : "Tạo sự kiện mới"}
+              </Button>
+            )}
+          </div>
         </div>
 
         <TabsContent value="VN" className="space-y-8">

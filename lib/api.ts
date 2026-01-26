@@ -167,6 +167,10 @@ class ApiClient {
     return this.request("/events/create-weekly", { method: "POST" });
   }
 
+  async createEvent(): Promise<{ message: string; event: GuildEvent }> {
+    return this.request("/events/create", { method: "POST" });
+  }
+
   // Teams - Admin
   async createTeam(
     eventId: number,
