@@ -26,7 +26,6 @@ const SchedulePage = () => {
     isLoading,
     error,
     fetchSchedulesByRegion,
-    fetchAllSchedules,
     updateSchedule,
     deleteSchedule
   } = useScheduleStore();
@@ -36,11 +35,9 @@ const SchedulePage = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchAllSchedules();
-    } else {
       fetchSchedulesByRegion(activeTab);
     }
-  }, [isAuthenticated, activeTab, fetchAllSchedules, fetchSchedulesByRegion]);
+  }, [isAuthenticated, activeTab, fetchSchedulesByRegion]);
 
   const handleToggleEnabled = async (id: number, enabled: boolean) => {
     try {

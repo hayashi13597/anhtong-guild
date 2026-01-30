@@ -19,7 +19,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/authStore";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { Route } from "next";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -38,6 +39,7 @@ export function LoginForm({
   const router = useRouter();
   const { login, isLoading } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   const {
     register,
@@ -55,6 +57,11 @@ export function LoginForm({
     setError(null);
     try {
       await login(data.username, data.password);
+      const redirectTo = searchParams.get("callbackUrl") as Route | null;
+      if (redirectTo) {
+        router.push(redirectTo);
+        return;
+      }
       router.push("/guild-war");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
