@@ -1,5 +1,6 @@
 "use client";
 
+import Loading from "@/components/Loading";
 import { ScheduleForm } from "@/components/schedule";
 import { CreateScheduleData } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
@@ -99,15 +100,7 @@ function ScheduleEditContent() {
 
 const ScheduleEditPage = () => {
   return (
-    <Suspense
-      fallback={
-        <main className="max-w-2xl min-h-screen mx-auto py-6 lg:py-20 px-4">
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
-        </main>
-      }
-    >
+    <Suspense fallback={<Loading />}>
       <ScheduleEditContent />
     </Suspense>
   );
