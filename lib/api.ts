@@ -84,6 +84,34 @@ export interface GuildEvent {
   teams: Team[];
 }
 
+export interface ScheduledNotification {
+  id: number;
+  title: string;
+  days: string[] | null;
+  region: "vn" | "na";
+  startTime: string;
+  endTime: string;
+  notifyBeforeMinutes: number;
+  mentionRole: string | null;
+  channelId: string;
+  enabled: boolean;
+  createdAt: string;
+}
+
+export interface CreateScheduleData {
+  title: string;
+  days?: string[];
+  region: "vn" | "na";
+  startTime: string;
+  endTime: string;
+  notifyBeforeMinutes: number;
+  mentionRole?: string | null;
+  channelId: string;
+  enabled?: boolean;
+}
+
+export type UpdateScheduleData = Partial<Omit<CreateScheduleData, "region">>;
+
 export interface SignupResponse {
   message: string;
   user: User;
@@ -224,6 +252,41 @@ class ApiClient {
 
   async deleteUser(userId: number): Promise<{ message: string }> {
     return this.request(`/users/${userId}`, { method: "DELETE" });
+  }
+
+  // Schedule - Public
+  async getSchedulesByRegion(
+    region: "vn" | "na"
+  ): Promise<ScheduledNotification[]> {
+    return this.request<ScheduledNotification[]>(`/schedule/region/${region}`);
+  }
+
+  // Schedule - Admin
+  async getAllSchedules(): Promise<ScheduledNotification[]> {
+    return this.request<ScheduledNotification[]>("/schedule");
+  }
+
+  async createSchedule(
+    data: CreateScheduleData
+  ): Promise<ScheduledNotification> {
+    return this.request<ScheduledNotification>("/schedule", {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
+  }
+
+  async updateSchedule(
+    id: number,
+    data: UpdateScheduleData
+  ): Promise<ScheduledNotification> {
+    return this.request<ScheduledNotification>(`/schedule/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data)
+    });
+  }
+
+  async deleteSchedule(id: number): Promise<{ message: string }> {
+    return this.request(`/schedule/${id}`, { method: "DELETE" });
   }
 }
 

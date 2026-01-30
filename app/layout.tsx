@@ -20,8 +20,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Anh Tong Guild",
-  description: "Website for Anh Tong Guild"
+  title: "AnhTong Guild",
+  description:
+    "This is the AnhTong Guild website, created to allow members to register for Guild War and to organize teams for Guild War."
 };
 
 export default function RootLayout({

@@ -7,10 +7,12 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  _hasHydrated: boolean;
 
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   setLoading: (loading: boolean) => void;
+  setHasHydrated: (hasHydrated: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -18,8 +20,9 @@ export const useAuthStore = create<AuthState>()(
     set => ({
       user: null,
       token: null,
-      isLoading: false,
+      isLoading: true, // Start as true to prevent redirect before hydration
       isAuthenticated: false,
+      _hasHydrated: false,
 
       login: async (username: string, password: string) => {
         set({ isLoading: true });
@@ -47,7 +50,10 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
-      setLoading: (loading: boolean) => set({ isLoading: loading })
+      setLoading: (loading: boolean) => set({ isLoading: loading }),
+
+      setHasHydrated: (hasHydrated: boolean) =>
+        set({ _hasHydrated: hasHydrated, isLoading: false })
     }),
     {
       name: "auth-storage",
@@ -55,7 +61,11 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         token: state.token,
         isAuthenticated: state.isAuthenticated
-      })
+      }),
+      onRehydrateStorage: () => state => {
+        // Called when hydration is complete
+        state?.setHasHydrated(true);
+      }
     }
   )
 );
