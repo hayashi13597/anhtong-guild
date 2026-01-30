@@ -2,6 +2,17 @@
 
 import TeamSplitter from "@/components/guild-war/TeamSplitter";
 import UserCard from "@/components/guild-war/UserCard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -90,14 +101,31 @@ const GuildWarPage = () => {
               <Link href="/guild-war/register">Đăng ký tham gia</Link>
             </Button>
             {isAuthenticated && (
-              <Button
-                variant="secondary"
-                onClick={handleCreateEvent}
-                disabled={isCreating}
-              >
-                <RefreshCcw className="w-4 h-4 mr-2" />
-                {isCreating ? "Đang làm mới..." : "Tạo sự kiện mới"}
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="secondary" disabled={isCreating}>
+                    <RefreshCcw className="w-4 h-4 mr-2" />
+                    {isCreating ? "Đang làm mới..." : "Tạo sự kiện mới"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Xác nhận tạo sự kiện mới
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Bạn có chắc chắn muốn tạo sự kiện mới không? Điều này sẽ
+                      mất tất cả dữ liệu đăng ký và đội hình hiện tại.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Hủy</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleCreateEvent}>
+                      Xác nhận
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </div>
