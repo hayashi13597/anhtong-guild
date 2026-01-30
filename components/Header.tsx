@@ -1,19 +1,22 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/authStore";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AnimatedThemeToggler } from "./AnimatedThemeToggler";
 
 const menuItems = [
-  { name: "Trang chủ", href: "/" },
-  { name: "Bang Chiến", href: "/guild-war" }
+  { name: "Trang Chủ", href: "/" },
+  { name: "Bang Chiến", href: "/guild-war" },
+  { name: "Events", href: "/schedule" }
 ] as const;
 
 const Header = () => {
   const [menuState, setMenuState] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -67,7 +70,14 @@ const Header = () => {
             <div className="absolute inset-0 m-auto hidden size-fit lg:block">
               <ul className="flex gap-8 text-sm">
                 {menuItems.map((item, index) => (
-                  <li key={index}>
+                  <li
+                    key={index}
+                    className={cn(
+                      isAuthenticated === false &&
+                        item.href === "/schedule" &&
+                        "hidden"
+                    )}
+                  >
                     <Link
                       href={item.href}
                       className="text-muted-foreground hover:text-accent-foreground block duration-150"
