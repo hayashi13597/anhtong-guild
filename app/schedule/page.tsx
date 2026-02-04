@@ -26,6 +26,7 @@ const SchedulePage = () => {
     isLoading,
     error,
     fetchSchedulesByRegion,
+    fetchAllSchedules,
     updateSchedule,
     deleteSchedule
   } = useScheduleStore();
@@ -33,13 +34,21 @@ const SchedulePage = () => {
   const [activeTab, setActiveTab] = useState<"vn" | "na">("vn");
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
+  const canManageSchedule = (region: "vn" | "na") =>
+    Boolean(isAuthenticated && user?.isAdmin && user?.region === region);
+
   useEffect(() => {
     if (isAuthenticated) {
-      fetchSchedulesByRegion(activeTab);
+      fetchAllSchedules();
+      return;
     }
-  }, [isAuthenticated, activeTab, fetchSchedulesByRegion]);
+
+    fetchSchedulesByRegion(activeTab);
+  }, [isAuthenticated, activeTab, fetchSchedulesByRegion, fetchAllSchedules]);
 
   const handleToggleEnabled = async (id: number, enabled: boolean) => {
+    const schedule = schedules.find(item => item.id === id);
+    if (!schedule || !canManageSchedule(schedule.region)) return;
     try {
       await updateSchedule(id, { enabled });
     } catch (error) {
@@ -49,6 +58,11 @@ const SchedulePage = () => {
 
   const handleDelete = async () => {
     if (deleteId === null) return;
+    const schedule = schedules.find(item => item.id === deleteId);
+    if (!schedule || !canManageSchedule(schedule.region)) {
+      setDeleteId(null);
+      return;
+    }
     try {
       await deleteSchedule(deleteId);
       setDeleteId(null);
@@ -139,9 +153,11 @@ const SchedulePage = () => {
                       <ScheduleCard
                         key={schedule.id}
                         schedule={schedule}
-                        isAdmin
+                        isAdmin={canManageSchedule(schedule.region)}
                         onToggleEnabled={handleToggleEnabled}
-                        onDelete={id => setDeleteId(id)}
+                        onDelete={id => {
+                          if (canManageSchedule("vn")) setDeleteId(id);
+                        }}
                       />
                     ))}
                   </div>
@@ -157,9 +173,11 @@ const SchedulePage = () => {
                       <ScheduleCard
                         key={schedule.id}
                         schedule={schedule}
-                        isAdmin
+                        isAdmin={canManageSchedule(schedule.region)}
                         onToggleEnabled={handleToggleEnabled}
-                        onDelete={id => setDeleteId(id)}
+                        onDelete={id => {
+                          if (canManageSchedule("na")) setDeleteId(id);
+                        }}
                       />
                     ))}
                   </div>
