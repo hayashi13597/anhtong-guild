@@ -6,10 +6,10 @@ import { useEffect, useMemo, useState } from "react";
 
 type Role = "Healer" | "DPS" | "Tank";
 
-type AvailabilityStatus = "available" | "assigned" | "unavailable";
+type AvailabilityStatus = "Participating" | "assigned" | "notParticipating";
 
-const SLOT_START_MINUTES = 17 * 60 + 30;
-const SLOT_END_MINUTES = 24 * 60 + 30;
+const SLOT_START_MINUTES = 19 * 60 + 30;
+const SLOT_END_MINUTES = 22 * 60 + 30;
 const SLOT_STEP_MINUTES = 30;
 
 const roleStyles: Record<Role, string> = {
@@ -20,11 +20,11 @@ const roleStyles: Record<Role, string> = {
 };
 
 const statusStyles: Record<AvailabilityStatus, string> = {
-  available:
+  Participating:
     "bg-emerald-200/80 text-emerald-900 dark:bg-emerald-500/30 dark:text-emerald-100",
   assigned:
     "bg-indigo-200/80 text-indigo-900 dark:bg-indigo-500/30 dark:text-indigo-100",
-  unavailable: "bg-slate-50 text-slate-400 dark:bg-slate-900/40"
+  notParticipating: "bg-slate-50 text-slate-400 dark:bg-slate-900/40"
 };
 
 const formatTime = (totalMinutes: number) => {
@@ -134,15 +134,17 @@ const OverviewPage = () => {
           const isAvailable = member.timeSlots.includes(
             `${dayKey}_${slot.start}-${slot.end}` as TeamMember["timeSlots"][number]
           );
-          if (!isAvailable) return "unavailable";
-          return assignedMemberMap.has(member.id) ? "assigned" : "available";
+          if (!isAvailable) return "notParticipating";
+          return assignedMemberMap.has(member.id)
+            ? "assigned"
+            : "Participating";
         })
       ),
     [assignedMemberMap, dayKey, members, slots]
   );
 
   const gridTemplateColumns = useMemo(
-    () => `240px repeat(${slots.length}, 96px)`,
+    () => `200px repeat(${slots.length}, 1fr)`,
     [slots.length]
   );
 
@@ -161,7 +163,8 @@ const OverviewPage = () => {
               <p className="text-muted-foreground max-w-2xl">
                 View the availability of guild members for Guild War events,
                 organized by server region and day. Easily identify who is
-                available, assigned, or unavailable for each time slot.
+                Participating, assigned, or Not Participating for each time
+                slot.
               </p>
             </div>
             <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -206,7 +209,7 @@ const OverviewPage = () => {
         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded-sm bg-emerald-200 dark:bg-emerald-500/40" />
-            Available
+            Participating
           </div>
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded-sm bg-indigo-200 dark:bg-indigo-500/40" />
@@ -214,7 +217,7 @@ const OverviewPage = () => {
           </div>
           <div className="flex items-center gap-2">
             <span className="h-3 w-3 rounded-sm bg-slate-100 dark:bg-slate-900/40" />
-            Unavailable
+            Not Participating
           </div>
         </div>
       </section>
@@ -238,7 +241,7 @@ const OverviewPage = () => {
                   key={slot.start}
                   className="border-b border-border px-3 py-3 text-center bg-muted/40"
                 >
-                  {slot.label}
+                  {slot.start} - {slot.end}
                 </div>
               ))}
             </div>
@@ -246,7 +249,7 @@ const OverviewPage = () => {
             {members.map((member, memberIndex) => (
               <div
                 key={member.id}
-                className="grid text-sm border-b border-border"
+                className="grid text-sm border-b border-border last:border-0 last:rounded-b-2xl overflow-hidden"
                 style={{ gridTemplateColumns }}
               >
                 <div className="sticky left-0 z-10 bg-card px-4 py-3 border-r border-border flex items-center gap-2">
@@ -268,9 +271,19 @@ const OverviewPage = () => {
                       title={`${member.name} - ${member.primaryRole} - ${status}`}
                       className={`relative px-2 py-3 text-center text-[11px] border-r border-border ${statusStyles[status]}`}
                     >
-                      {status === "available" && (
+                      {status === "notParticipating" && (
                         <div className="flex flex-col items-center gap-0.5">
-                          <span className="font-semibold">Available</span>
+                          <span className="font-semibold">
+                            Not Participating
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {slot.start}-{slot.end}
+                          </span>
+                        </div>
+                      )}
+                      {status === "Participating" && (
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className="font-semibold">Participating</span>
                           <span className="text-[10px] text-muted-foreground">
                             {slot.start}-{slot.end}
                           </span>
