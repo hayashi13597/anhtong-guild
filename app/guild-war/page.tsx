@@ -332,6 +332,7 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
                           user={user}
                           containerId="available-saturday"
                           dayFilter="sat"
+                          region={region}
                         />
                       ))
                   )}
@@ -439,6 +440,7 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
                                   user={user}
                                   containerId={team.id}
                                   dayFilter="sat"
+                                  region={region}
                                 />
                               ))
                           )}
@@ -542,6 +544,7 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
                           user={user}
                           containerId="available-sunday"
                           dayFilter="sun"
+                          region={region}
                         />
                       ))
                   )}
@@ -649,6 +652,7 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
                                   user={user}
                                   containerId={team.id}
                                   dayFilter="sun"
+                                  region={region}
                                 />
                               ))
                           )}

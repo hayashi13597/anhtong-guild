@@ -9,8 +9,12 @@ type Role = "Healer" | "DPS" | "Tank";
 type AvailabilityStatus = "Participating" | "assigned" | "notParticipating";
 
 const SLOT_START_MINUTES = 19 * 60 + 30;
-const SLOT_END_MINUTES = 22 * 60 + 30;
+const SLOT_END_MINUTES = 23 * 60 + 30;
 const SLOT_STEP_MINUTES = 30;
+const NA_REFERENCE_DATES: Record<"sat" | "sun", string> = {
+  sat: "2025-01-04",
+  sun: "2025-01-05"
+};
 
 const roleStyles: Record<Role, string> = {
   Healer:
@@ -33,13 +37,37 @@ const formatTime = (totalMinutes: number) => {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 };
 
-const formatLocalDate = (timeZone: string) =>
+const buildEstDate = (dayKey: "sat" | "sun", time: string) => {
+  const [year, month, day] = NA_REFERENCE_DATES[dayKey]
+    .split("-")
+    .map(Number);
+  const [hour, minute] = time.split(":").map(Number);
+  return new Date(Date.UTC(year, month - 1, day, hour + 5, minute));
+};
+
+const formatLocalTimeFromEst = (dayKey: "sat" | "sun", time: string) => {
+  const date = buildEstDate(dayKey, time);
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  });
+  const parts = formatter.formatToParts(date);
+  const day = parts.find(part => part.type === "weekday")?.value ?? "";
+  const hour = parts.find(part => part.type === "hour")?.value ?? "";
+  const minute = parts.find(part => part.type === "minute")?.value ?? "";
+  const period = parts.find(part => part.type === "dayPeriod")?.value ?? "";
+  return { day, time: `${hour}:${minute} ${period}`.trim() };
+};
+
+const formatLocalDate = (timeZone?: string) =>
   new Intl.DateTimeFormat("en-US", {
     weekday: "short",
     month: "short",
     day: "numeric",
     year: "numeric",
-    timeZone
+    ...(timeZone ? { timeZone } : {})
   }).format(new Date());
 
 const OverviewPage = () => {
@@ -67,12 +95,26 @@ const OverviewPage = () => {
     fetchEvent(activeRegion);
   }, [activeRegion, fetchEvent]);
 
-  const timeZone =
-    activeRegion === "VN" ? "Asia/Ho_Chi_Minh" : "America/New_York";
-  const serverTimeLabel =
-    activeRegion === "VN"
-      ? "Server Time: UTC+7 (Asia/Ho_Chi_Minh)"
-      : "Server Time: GMT-5 (America/New_York)";
+  const timeZone = activeRegion === "VN" ? "Asia/Ho_Chi_Minh" : undefined;
+  const serverTimeLabel = useMemo(() => {
+    if (activeRegion === "VN") {
+      return "Server Time: UTC+7 (Asia/Ho_Chi_Minh)";
+    }
+
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+      timeZone: "America/New_York"
+    });
+    return `Server Time (EST): ${formatter.format(currentTime)}`;
+  }, [activeRegion, currentTime]);
+  const localTimeZoneLabel = useMemo(() => {
+    if (activeRegion !== "NA") return null;
+    if (typeof Intl === "undefined") return null;
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  }, [activeRegion]);
 
   const localDateLabel = useMemo(() => formatLocalDate(timeZone), [timeZone]);
   // Format current time for the selected timezone
@@ -81,15 +123,21 @@ const OverviewPage = () => {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
-      hour12: false,
-      timeZone
+      hour12: activeRegion === "NA",
+      ...(timeZone ? { timeZone } : {})
     }).format(currentTime);
-  }, [currentTime, timeZone]);
+  }, [activeRegion, currentTime, timeZone]);
 
   const dayKey = activeDay;
 
   const slots = useMemo(() => {
-    const items: { start: string; end: string; label: string }[] = [];
+    const items: {
+      start: string;
+      end: string;
+      label: string;
+      displayRange: string;
+    }[] = [];
+
     for (
       let minutes = SLOT_START_MINUTES;
       minutes < SLOT_END_MINUTES;
@@ -97,10 +145,37 @@ const OverviewPage = () => {
     ) {
       const start = formatTime(minutes);
       const end = formatTime(minutes + SLOT_STEP_MINUTES);
-      items.push({ start, end, label: start });
+
+      if (activeRegion === "NA") {
+        const startLocal = formatLocalTimeFromEst(activeDay, start);
+        const endLocal = formatLocalTimeFromEst(activeDay, end);
+        const range =
+          startLocal.day !== endLocal.day
+            ? `${startLocal.day} ${startLocal.time} - ${endLocal.day} ${endLocal.time}`
+            : `${startLocal.time} - ${endLocal.time}`;
+        const label =
+          startLocal.day !== endLocal.day
+            ? `${startLocal.day} ${startLocal.time}`
+            : startLocal.time;
+
+        items.push({
+          start,
+          end,
+          label,
+          displayRange: range
+        });
+      } else {
+        items.push({
+          start,
+          end,
+          label: start,
+          displayRange: `${start}-${end}`
+        });
+      }
     }
+
     return items;
-  }, []);
+  }, [activeDay, activeRegion]);
 
   const roleTotals = useMemo(() => {
     const totals = { healer: 0, tank: 0, dps: 0 };
@@ -177,6 +252,11 @@ const OverviewPage = () => {
               <span className="rounded-full border border-border px-3 py-1 bg-muted/40">
                 {serverTimeLabel}
               </span>
+              {activeRegion === "NA" && localTimeZoneLabel && (
+                <span className="rounded-full border border-border px-3 py-1 bg-muted/40">
+                  Timezone: {localTimeZoneLabel}
+                </span>
+              )}
               <span className="rounded-full border border-border px-3 py-1 bg-muted/40 font-mono">
                 {currentTimeLabel}
               </span>
@@ -241,7 +321,7 @@ const OverviewPage = () => {
                   key={slot.start}
                   className="border-b border-border px-3 py-3 text-center bg-muted/40"
                 >
-                  {slot.start} - {slot.end}
+                  {slot.displayRange}
                 </div>
               ))}
             </div>
@@ -277,7 +357,7 @@ const OverviewPage = () => {
                             Not Participating
                           </span>
                           <span className="text-[10px] text-muted-foreground">
-                            {slot.start}-{slot.end}
+                            {slot.displayRange}
                           </span>
                         </div>
                       )}
@@ -285,7 +365,7 @@ const OverviewPage = () => {
                         <div className="flex flex-col items-center gap-0.5">
                           <span className="font-semibold">Participating</span>
                           <span className="text-[10px] text-muted-foreground">
-                            {slot.start}-{slot.end}
+                            {slot.displayRange}
                           </span>
                         </div>
                       )}
@@ -295,7 +375,7 @@ const OverviewPage = () => {
                             Assigned {assignedTeam ? `- ${assignedTeam}` : ""}
                           </span>
                           <span className="text-[10px] text-muted-foreground">
-                            {slot.start}-{slot.end}
+                            {slot.displayRange}
                           </span>
                         </div>
                       )}

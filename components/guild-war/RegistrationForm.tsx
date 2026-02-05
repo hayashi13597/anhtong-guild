@@ -28,9 +28,24 @@ import { type TimeSlot } from "@/lib/api";
 import { classDisplayNames, classEnum, type ClassType } from "@/lib/classes";
 import { useGuildWarStore } from "@/stores/eventStore";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
+
+const NA_TIMEZONES = [
+  { value: "America/New_York", label: "ET (New York)" },
+  { value: "America/Chicago", label: "CT (Chicago)" },
+  { value: "America/Denver", label: "MT (Denver)" },
+  { value: "America/Los_Angeles", label: "PT (Los Angeles)" },
+  { value: "America/Anchorage", label: "AKT (Anchorage)" },
+  { value: "Pacific/Honolulu", label: "HT (Honolulu)" }
+];
+
+const EST_OFFSET_HOURS = 5;
+const SLOT_REFERENCE_DATES: Record<"sat" | "sun", string> = {
+  sat: "2025-01-04",
+  sun: "2025-01-05"
+};
 
 const signupSchema = z
   .object({
@@ -104,11 +119,71 @@ interface RegistrationFormProps {
   defaultRegion?: "vn" | "na";
 }
 
+function getDetectedTimeZone(): string {
+  if (typeof Intl === "undefined") return "America/New_York";
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York";
+}
+
+function parseTime(value: string): { hour: number; minute: number } {
+  const [hour, minute] = value.split(":").map(Number);
+  return { hour, minute };
+}
+
+function buildEstDate(dayKey: "sat" | "sun", time: string): Date {
+  const [year, month, day] = SLOT_REFERENCE_DATES[dayKey]
+    .split("-")
+    .map(Number);
+  const { hour, minute } = parseTime(time);
+  return new Date(
+    Date.UTC(year, month - 1, day, hour + EST_OFFSET_HOURS, minute)
+  );
+}
+
+function formatSlotLabel(slot: string, timeZone: string): string {
+  const [dayKey, range] = slot.split("_") as ["sat" | "sun", string];
+  const [start, end] = range.split("-");
+  const startDate = buildEstDate(dayKey, start);
+  const endDate = buildEstDate(dayKey, end);
+
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone
+  });
+
+  const toParts = (date: Date) => {
+    const parts = formatter.formatToParts(date);
+    const day = parts.find(part => part.type === "weekday")?.value ?? "";
+    const hour = parts.find(part => part.type === "hour")?.value ?? "";
+    const minute = parts.find(part => part.type === "minute")?.value ?? "";
+    return { day, time: `${hour}:${minute}` };
+  };
+
+  const startParts = toParts(startDate);
+  const endParts = toParts(endDate);
+
+  if (startParts.day !== endParts.day) {
+    return `${startParts.day} ${startParts.time} - ${endParts.day} ${endParts.time}`;
+  }
+
+  return `${startParts.day} ${startParts.time} - ${endParts.time}`;
+}
+
 export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
   const registerUser = useGuildWarStore(state => state.registerUser);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const detectedTimeZone = getDetectedTimeZone();
+  const naTimeZone = detectedTimeZone;
+
+  const naTimeZoneLabel = useMemo(() => {
+    return (
+      NA_TIMEZONES.find(tz => tz.value === naTimeZone)?.label || naTimeZone
+    );
+  }, [naTimeZone]);
 
   const defaultValues: SignupFormData = {
     username: "",
@@ -127,11 +202,14 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors }
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues
   });
+  const selectedRegion = watch("region");
+  const isNaRegion = selectedRegion === "na";
 
   const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true);
@@ -437,10 +515,20 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
               )}
             </Field>
 
+            {isNaRegion && (
+              <Field>
+                <FieldLabel>Múi giờ (NA)</FieldLabel>
+                <FieldDescription>
+                  Hiển thị theo timezone của bạn: {naTimeZoneLabel}
+                </FieldDescription>
+              </Field>
+            )}
+
             <Field>
               <FieldLabel>Khung giờ tham gia *</FieldLabel>
               <FieldDescription>
                 Chọn các khung giờ bạn có thể tham gia
+                {isNaRegion ? ` (Đang xem theo ${naTimeZoneLabel})` : ""}
               </FieldDescription>
               <Controller
                 name="timeSlots"
@@ -448,7 +536,9 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
                 render={({ field }) => (
                   <div className="space-y-3 mt-2">
                     <div>
-                      <div className="font-medium text-sm mb-2">Thứ 7</div>
+                      <div className="font-medium text-sm mb-2">
+                        Thứ 7{isNaRegion ? " (timezone)" : ""}
+                      </div>
                       <div className="grid grid-cols-2 gap-2">
                         {[
                           "sat_19:30-20:00",
@@ -477,7 +567,9 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
                               htmlFor={slot}
                               className="text-sm cursor-pointer"
                             >
-                              {slot.split("_")[1]}
+                              {isNaRegion
+                                ? formatSlotLabel(slot, naTimeZone)
+                                : slot.split("_")[1]}
                             </label>
                           </div>
                         ))}
@@ -485,7 +577,9 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
                     </div>
 
                     <div>
-                      <div className="font-medium text-sm mb-2">Chủ nhật</div>
+                      <div className="font-medium text-sm mb-2">
+                        Chủ nhật{isNaRegion ? " (timezone)" : ""}
+                      </div>
                       <div className="grid grid-cols-2 gap-2">
                         {[
                           "sun_19:30-20:00",
@@ -514,7 +608,9 @@ export function RegistrationForm({ defaultRegion }: RegistrationFormProps) {
                               htmlFor={slot}
                               className="text-sm cursor-pointer"
                             >
-                              {slot.split("_")[1]}
+                              {isNaRegion
+                                ? formatSlotLabel(slot, naTimeZone)
+                                : slot.split("_")[1]}
                             </label>
                           </div>
                         ))}

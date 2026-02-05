@@ -214,6 +214,7 @@ function TeamCard({
                     isMobile={isMobile}
                     onRemove={userId => onRemoveUser?.(userId, team.id)}
                     dayFilter={dayFilter}
+                    region={region}
                   />
                 ))
             )}

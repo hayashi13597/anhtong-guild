@@ -639,6 +639,7 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                               isSelected={selectedUserId === user.id}
                               onSelect={handleSelectUser}
                               dayFilter="sat"
+                              region={region}
                             />
                           ))
                       )}
@@ -793,6 +794,7 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                               isSelected={selectedUserId === user.id}
                               onSelect={handleSelectUser}
                               dayFilter="sun"
+                              region={region}
                             />
                           ))
                       )}
@@ -843,7 +845,11 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
       {/* Drag Overlay for smooth dragging */}
       <DragOverlay>
         {activeUser ? (
-          <UserCard user={activeUser} containerId="available-saturday" />
+          <UserCard
+            user={activeUser}
+            containerId="available-saturday"
+            region={region}
+          />
         ) : null}
       </DragOverlay>
 
