@@ -15,7 +15,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getColorForBadge } from "@/lib/color";
@@ -163,6 +169,8 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
     {}
   );
   const { availableUsers, teams } = useGuildWarStore(state => state[region]);
+  const membersVN = useGuildWarStore(state => state.VN);
+  const membersNA = useGuildWarStore(state => state.NA);
 
   // Helper to get/set team filter
   const getTeamFilter = (teamId: string) => teamFilters[teamId] ?? null;
@@ -241,7 +249,17 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
     <div className="space-y-6 p-3 sm:p-6">
       {/* Saturday Section */}
       <div>
-        <h2 className="text-xl font-bold mb-4">Thứ 7 (Saturday)</h2>
+        <h2 className="text-xl font-bold mb-4">
+          Thứ 7 (Saturday) - Tổng thành viên đã đăng ký:{" "}
+          {region === "NA"
+            ? membersNA.availableUsers.filter(u =>
+                u.timeSlots.some(slot => slot.startsWith("sat_"))
+              ).length
+            : membersVN.availableUsers.filter(u =>
+                u.timeSlots.some(slot => slot.startsWith("sat_"))
+              ).length}{" "}
+          người
+        </h2>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
           {/* Available Users - Saturday */}
           <div className="lg:col-span-1">
@@ -250,6 +268,9 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
                 <CardTitle className="text-base sm:text-lg">
                   Thành viên đã đăng ký
                 </CardTitle>
+                <CardDescription>
+                  Còn lại: {saturdayUsers.length} thành viên chưa vào team
+                </CardDescription>
                 <div className="flex items-center flex-wrap gap-2 mt-2">
                   <Badge
                     className={`${getColorForBadge("DPS")} cursor-pointer transition-all ${satAvailableFilter === "DPS" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
@@ -333,6 +354,10 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
                             {team.name}
                           </CardTitle>
                         </div>
+
+                        <CardDescription>
+                          Tổng thành viên: {team.members.length}
+                        </CardDescription>
 
                         <div className="flex items-center gap-2">
                           <Badge
@@ -434,7 +459,17 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
 
       {/* Sunday Section */}
       <div>
-        <h2 className="text-xl font-bold mb-4">Chủ nhật (Sunday)</h2>
+        <h2 className="text-xl font-bold mb-4">
+          Chủ nhật (Sunday) - Tổng thành viên đã đăng ký:{" "}
+          {region === "NA"
+            ? membersNA.availableUsers.filter(u =>
+                u.timeSlots.some(slot => slot.startsWith("sun_"))
+              ).length
+            : membersVN.availableUsers.filter(u =>
+                u.timeSlots.some(slot => slot.startsWith("sun_"))
+              ).length}{" "}
+          người
+        </h2>
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
           {/* Available Users - Sunday */}
           <div className="lg:col-span-1">
@@ -443,6 +478,9 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
                 <CardTitle className="text-base sm:text-lg">
                   Thành viên đã đăng ký
                 </CardTitle>
+                <CardDescription>
+                  Còn lại: {sundayUsers.length} thành viên chưa vào team
+                </CardDescription>
                 <div className="flex items-center flex-wrap gap-2 mt-2">
                   <Badge
                     className={`${getColorForBadge("DPS")} cursor-pointer transition-all ${sunAvailableFilter === "DPS" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
@@ -526,6 +564,10 @@ function PublicView({ region }: { region: "VN" | "NA" }) {
                             {team.name}
                           </CardTitle>
                         </div>
+
+                        <CardDescription>
+                          Tổng thành viên: {team.members.length}
+                        </CardDescription>
 
                         <div className="flex items-center gap-2">
                           <Badge

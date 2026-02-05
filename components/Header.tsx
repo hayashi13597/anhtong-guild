@@ -10,7 +10,8 @@ import { AnimatedThemeToggler } from "./AnimatedThemeToggler";
 const menuItems = [
   { name: "Trang Chủ", href: "/" },
   { name: "Bang Chiến", href: "/guild-war" },
-  { name: "Events", href: "/schedule" }
+  { name: "Events", href: "/schedule" },
+  { name: "Calendar", href: "/overview" }
 ] as const;
 
 const Header = () => {

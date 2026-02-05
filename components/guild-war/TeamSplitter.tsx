@@ -29,7 +29,13 @@ const ROLE_PRIORITY: Record<string, number> = {
 type RoleFilter = "DPS" | "Healer" | "Tank" | null;
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -95,6 +101,8 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
   const moveUser = useGuildWarStore(state => state.moveUser);
   const deleteUser = useGuildWarStore(state => state.deleteUser);
   const fetchEvent = useGuildWarStore(state => state.fetchEvent);
+  const membersVN = useGuildWarStore(state => state.VN);
+  const membersNA = useGuildWarStore(state => state.NA);
 
   const user = useAuthStore(state => state.user);
   const isAdmin = user?.isAdmin ?? false;
@@ -525,7 +533,17 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
       <div className="space-y-6 p-3 sm:p-6">
         {/* Saturday Section */}
         <div>
-          <h2 className="text-xl font-bold mb-4">Thứ 7 (Saturday)</h2>
+          <h2 className="text-xl font-bold mb-4">
+            Thứ 7 (Saturday) - Tổng thành viên đã đăng ký:{" "}
+            {region === "NA"
+              ? membersNA.availableUsers.filter(u =>
+                  u.timeSlots.some(slot => slot.startsWith("sat_"))
+                ).length
+              : membersVN.availableUsers.filter(u =>
+                  u.timeSlots.some(slot => slot.startsWith("sat_"))
+                ).length}{" "}
+            người
+          </h2>
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
             {/* Available Users - Saturday */}
             <div className="lg:col-span-1">
@@ -534,6 +552,9 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                   <CardTitle className="text-base sm:text-lg">
                     Thành viên đã đăng ký
                   </CardTitle>
+                  <CardDescription>
+                    Còn lại: {saturdayUsers.length} thành viên chưa vào team
+                  </CardDescription>
                   <div className="flex items-center flex-wrap gap-2 mt-2">
                     <Badge
                       className={`${getColorForBadge("DPS")} cursor-pointer transition-all ${satAvailableFilter === "DPS" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}
@@ -666,7 +687,17 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
 
         {/* Sunday Section */}
         <div>
-          <h2 className="text-xl font-bold mb-4">Chủ nhật (Sunday)</h2>
+          <h2 className="text-xl font-bold mb-4">
+            Chủ nhật (Sunday) - Tổng thành viên đã đăng ký:{" "}
+            {region === "NA"
+              ? membersNA.availableUsers.filter(u =>
+                  u.timeSlots.some(slot => slot.startsWith("sun_"))
+                ).length
+              : membersVN.availableUsers.filter(u =>
+                  u.timeSlots.some(slot => slot.startsWith("sun_"))
+                ).length}{" "}
+            người
+          </h2>
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
             {/* Available Users - Sunday */}
             <div className="lg:col-span-1">
@@ -675,6 +706,9 @@ export default function TeamSplitter({ region }: { region: "VN" | "NA" }) {
                   <CardTitle className="text-base sm:text-lg">
                     Thành viên đã đăng ký
                   </CardTitle>
+                  <CardDescription>
+                    Còn lại: {sundayUsers.length} thành viên chưa vào team
+                  </CardDescription>
                   <div className="flex items-center flex-wrap gap-2 mt-2">
                     <Badge
                       className={`${getColorForBadge("DPS")} cursor-pointer transition-all ${sunAvailableFilter === "DPS" ? "ring-2 ring-offset-2 ring-primary" : "opacity-80 hover:opacity-100"}`}

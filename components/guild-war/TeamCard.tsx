@@ -121,7 +121,10 @@ function TeamCard({
               className="text-lg cursor-pointer hover:underline"
               onClick={() => setEditing(true)}
             >
-              {team.name}
+              {team.name} <br />
+              <span className="text-sm font-normal text-muted-foreground">
+                Tổng thành viên: {team.members.length}
+              </span>
             </CardTitle>
           )}
           <Button
